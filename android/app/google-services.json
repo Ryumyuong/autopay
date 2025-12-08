@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "707565609598",
+    "firebase_url": "https://autoagence-34831-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "autoagence-34831",
+    "storage_bucket": "autoagence-34831.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:707565609598:android:5a3b26237cabd4367bee2f",
+        "android_client_info": {
+          "package_name": "com.auto.myapplication2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmin4nc93N_JX2IjSgIbYgWoqX7fDQ-_o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
