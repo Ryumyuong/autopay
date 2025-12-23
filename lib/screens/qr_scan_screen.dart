@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../utils/constants.dart';
 
 class QrScanScreen extends StatefulWidget {
@@ -9,11 +10,40 @@ class QrScanScreen extends StatefulWidget {
 }
 
 class _QrScanScreenState extends State<QrScanScreen> {
-  bool _flashOn = false;
+  MobileScannerController? _controller;
+  bool _isScanned = false;
+  bool _torchOn = false;
 
-  // QR 코드 스캔 결과 처리
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_isScanned) return;
+
+    final List<Barcode> barcodes = capture.barcodes;
+    for (final barcode in barcodes) {
+      if (barcode.rawValue != null) {
+        setState(() => _isScanned = true);
+        _onQrScanned(barcode.rawValue!);
+        break;
+      }
+    }
+  }
+
   void _onQrScanned(String data) {
-    // QR 코드 데이터 처리 로직
     debugPrint('QR Scanned: $data');
 
     showDialog(
@@ -27,12 +57,27 @@ class _QrScanScreenState extends State<QrScanScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _isScanned = false);
+            },
+            child: const Text('다시 스캔', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context, data);
+            },
             child: const Text('확인', style: TextStyle(color: AppColors.buttonPrimary)),
           ),
         ],
       ),
     );
+  }
+
+  void _toggleTorch() async {
+    await _controller?.toggleTorch();
+    setState(() => _torchOn = !_torchOn);
   }
 
   @override
@@ -50,45 +95,23 @@ class _QrScanScreenState extends State<QrScanScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              _flashOn ? Icons.flash_on : Icons.flash_off,
+              _torchOn ? Icons.flash_on : Icons.flash_off,
               color: Colors.white,
             ),
-            onPressed: () {
-              setState(() => _flashOn = !_flashOn);
-              // TODO: 실제 플래시 제어 로직
-            },
+            onPressed: _toggleTorch,
+          ),
+          IconButton(
+            icon: const Icon(Icons.cameraswitch, color: Colors.white),
+            onPressed: () => _controller?.switchCamera(),
           ),
         ],
       ),
       body: Stack(
         children: [
-          // QR 스캐너 뷰 (실제 구현 시 qr_code_scanner 패키지 사용)
-          // QRView(
-          //   key: qrKey,
-          //   onQRViewCreated: _onQRViewCreated,
-          // ),
-
-          // 임시 플레이스홀더
-          Container(
-            color: Colors.black87,
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.qr_code_scanner, size: 100, color: Colors.white54),
-                  SizedBox(height: 24),
-                  Text(
-                    'QR 코드 스캐너',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '카메라 권한이 필요합니다',
-                    style: TextStyle(color: Colors.white54, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
+          // QR 스캐너 뷰
+          MobileScanner(
+            controller: _controller,
+            onDetect: _onDetect,
           ),
 
           // 스캔 프레임 오버레이
@@ -102,27 +125,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
               ),
               child: Stack(
                 children: [
-                  // 코너 장식
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    child: _buildCorner(true, true),
-                  ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: _buildCorner(true, false),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    child: _buildCorner(false, true),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: _buildCorner(false, false),
-                  ),
+                  Positioned(top: 0, left: 0, child: _buildCorner(true, true)),
+                  Positioned(top: 0, right: 0, child: _buildCorner(true, false)),
+                  Positioned(bottom: 0, left: 0, child: _buildCorner(false, true)),
+                  Positioned(bottom: 0, right: 0, child: _buildCorner(false, false)),
                 ],
               ),
             ),
@@ -141,7 +147,6 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                // 수동 입력 버튼
                 TextButton.icon(
                   onPressed: _showManualInputDialog,
                   icon: const Icon(Icons.keyboard, color: AppColors.buttonPrimary),
@@ -213,7 +218,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               final id = controller.text.trim();
               if (id.isNotEmpty) {
                 Navigator.pop(context);
-                _onQrScanned(id);
+                Navigator.pop(context, id);
               }
             },
             child: const Text('확인', style: TextStyle(color: AppColors.buttonPrimary)),

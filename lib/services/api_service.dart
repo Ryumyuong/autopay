@@ -2,9 +2,7 @@ import 'package:dio/dio.dart';
 import '../models/models.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8080'; // Android 에뮬레이터용
-  // static const String baseUrl = 'http://localhost:8080'; // iOS 시뮬레이터용
-  // static const String baseUrl = 'http://YOUR_SERVER_IP:8080'; // 실제 서버
+  static const String baseUrl = 'http://223.130.146.117:8080'; // 실제 서버
 
   final Dio _dio;
 

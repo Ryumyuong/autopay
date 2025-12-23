@@ -74,6 +74,25 @@ class AutoPayApp extends StatelessWidget {
         ),
       ),
       home: const SplashScreen(),
+      builder: (context, child) {
+        // 에러 발생시 화면 표시
+        ErrorWidget.builder = (FlutterErrorDetails details) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  '오류가 발생했습니다.\n${details.exception}',
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          );
+        };
+        return child ?? const SizedBox();
+      },
     );
   }
 }
