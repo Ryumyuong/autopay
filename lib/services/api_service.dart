@@ -142,6 +142,15 @@ class ApiService {
     }
   }
 
+  // 회원탈퇴
+  Future<void> deleteUser(String id) async {
+    try {
+      await _dio.delete('/user/$id');
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException e) {
     if (e.response != null) {
       final statusCode = e.response!.statusCode;

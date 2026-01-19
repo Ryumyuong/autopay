@@ -4,7 +4,17 @@
       "Bash(flutter build:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(dart run:*)",
+      "Bash(cd:*)",
+      "Bash(git -C \"C:\\\\Users\\\\PC_1M\\\\auto\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\PC_1M\\\\auto\" log --oneline -3)",
+      "Bash(git -C \"C:\\\\Users\\\\PC_1M\\\\auto\" add assets/logo.png pubspec.yaml pubspec.lock android/ ios/)",
+      "Bash(git -C \"C:\\\\Users\\\\PC_1M\\\\auto\" commit -m \"$\\(cat <<''EOF''\nUpdate app icon and bump version to 1.0.1+2\n\n- Replace placeholder app icons with new A-pay logo\n- Generate all required iOS/Android icon sizes\n- Add flutter_launcher_icons configuration\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C \"C:\\\\Users\\\\PC_1M\\\\auto\" push)"
     ]
   }
 }
