@@ -330,29 +330,32 @@ class _SignupScreenState extends State<SignupScreen> {
 
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textHint),
-      filled: true,
-      fillColor: AppColors.primaryDark,
+      labelText: hint,
+      labelStyle: const TextStyle(color: AppColors.textHint),
+      filled: false,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-        borderSide: const BorderSide(color: AppColors.buttonPrimary, width: 2),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppColors.accent, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+        borderRadius: BorderRadius.circular(4),
         borderSide: const BorderSide(color: AppColors.error, width: 1),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
+      ),
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.paddingMedium,
-        vertical: AppDimens.paddingMedium,
+        horizontal: 16,
+        vertical: 16,
       ),
     );
   }

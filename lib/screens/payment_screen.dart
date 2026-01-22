@@ -127,7 +127,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: AppColors.cardBackground,
         title: const Text('결제 확인', style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
           '받는 분: $payeeName\n금액: ${Formatters.formatPoint(_currentAmount)}\n\n결제하시겠습니까?',
@@ -243,8 +243,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
             margin: const EdgeInsets.all(AppDimens.paddingMedium),
             padding: const EdgeInsets.all(AppDimens.paddingMedium),
             decoration: BoxDecoration(
-              color: AppColors.primaryDark,
+              color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+              border: Border.all(color: AppColors.cardBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -268,13 +276,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     controller: _payeeIdController,
                     style: const TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: '결제 대상 ID 입력',
-                      hintStyle: const TextStyle(color: AppColors.textHint),
-                      filled: true,
-                      fillColor: AppColors.primaryDark,
+                      labelText: '결제 대상 ID 입력',
+                      labelStyle: const TextStyle(color: AppColors.textHint),
+                      filled: false,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: const BorderSide(color: AppColors.cardBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: const BorderSide(color: AppColors.cardBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
                       ),
                       suffixIcon: _isPayeeValid
                           ? const Icon(Icons.check_circle, color: AppColors.success)
@@ -455,7 +470,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Material(
-          color: AppColors.primaryDark,
+          color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
           child: InkWell(
             onTap: enabled ? onPressed : null,

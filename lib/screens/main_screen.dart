@@ -9,6 +9,7 @@ import 'charge_screen.dart';
 import 'payment_screen.dart';
 import 'usage_screen.dart';
 import 'qr_scan_screen.dart';
+import 'recharge_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -55,7 +56,7 @@ class _MainScreenState extends State<MainScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: AppColors.cardBackground,
         title: const Text('로그아웃', style: TextStyle(color: AppColors.textPrimary)),
         content: const Text('로그아웃 하시겠습니까?', style: TextStyle(color: AppColors.textSecondary)),
         actions: [
@@ -86,7 +87,7 @@ class _MainScreenState extends State<MainScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: AppColors.cardBackground,
         title: const Text('회원탈퇴', style: TextStyle(color: AppColors.error)),
         content: const Text(
           '정말로 탈퇴하시겠습니까?\n탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.',
@@ -132,41 +133,47 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        title: const Text(
-          AppStrings.appName,
-          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
-            onPressed: _loadUserData,
-          ),
-        ],
-      ),
-      drawer: _buildDrawer(),
+      endDrawer: _buildDrawer(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary))
           : RefreshIndicator(
               onRefresh: _loadUserData,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(AppDimens.paddingMedium),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 포인트 카드
-                    _buildPointCard(),
-                    const SizedBox(height: 24),
+                    // 상단 바
+                    _buildTopBar(),
 
-                    // 메뉴 그리드
-                    _buildMenuGrid(),
+                    // 메인 콘텐츠
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 인사말
+                          _buildGreeting(),
+                          const SizedBox(height: 20),
+
+                          // 포인트결제/충전 카드
+                          _buildMainCards(),
+                          const SizedBox(height: 40),
+
+                          // 계좌번호 카드
+                          _buildAccountCard(),
+                          const SizedBox(height: 40),
+
+                          // 배너
+                          _buildBanner(),
+                          const SizedBox(height: 40),
+
+                          // 전화 이미지
+                          _buildTelImage(),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -174,222 +181,267 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  Widget _buildTopBar() {
+    return Container(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 50, bottom: 16),
+      color: AppColors.background,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Spacer(),
+          // 로고
+          Image.asset(
+            AppAssets.logos,
+            width: 70,
+            height: 80,
+            fit: BoxFit.contain,
+          ),
+          const Spacer(),
+          // 메뉴 버튼
+          GestureDetector(
+            onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.cardBorder, width: 1),
+              ),
+              child: const Icon(Icons.menu, color: AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGreeting() {
+    return Row(
+      children: [
+        Text(
+          _person?.name ?? _userName,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const Text(
+          '님 안녕하세요!',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainCards() {
+    return Row(
+      children: [
+        // 포인트결제 카드
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => PaymentScreen(
+                  userName: _userId,
+                  userDisplayName: _person?.name ?? _userName,
+                  currentPoints: _person?.point ?? 0,
+                ),
+              )).then((_) => _loadUserData());
+            },
+            child: Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  AppAssets.point,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        // 포인트충전 카드
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => ChargeScreen(
+                  userName: _userId,
+                  currentPoints: _person?.point ?? 0,
+                ),
+              )).then((_) => _loadUserData());
+            },
+            child: Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  AppAssets.charge,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAccountCard() {
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.asset(
+          AppAssets.number,
+          height: 120,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBanner() {
+    return Image.asset(
+      AppAssets.addBanner,
+      height: 120,
+      fit: BoxFit.contain,
+    );
+  }
+
+  Widget _buildTelImage() {
+    return Image.asset(
+      AppAssets.telImg,
+      height: 120,
+      fit: BoxFit.contain,
+    );
+  }
+
   Widget _buildDrawer() {
     return Drawer(
-      backgroundColor: AppColors.primaryDark,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      backgroundColor: AppColors.cardBackground,
+      width: 280,
+      child: Column(
         children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(color: AppColors.accent),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
+          // 헤더
+          Container(
+            width: double.infinity,
+            height: 160,
+            padding: const EdgeInsets.only(top: 30, left: 16, right: 16),
+            color: AppColors.primaryDark,
+            child: Row(
               children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white24,
-                  child: Icon(Icons.person, size: 36, color: Colors.white),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _person?.name ?? _userName,
-                  style: const TextStyle(
+                // 사용자 아바타
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    fontSize: AppDimens.fontXLarge,
-                    fontWeight: FontWeight.bold,
+                    shape: BoxShape.circle,
                   ),
+                  child: const Icon(Icons.person, size: 36, color: AppColors.primaryDark),
                 ),
-                Text(
-                  _userId,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: AppDimens.fontMedium,
+                const SizedBox(width: 16),
+                // 사용자 정보
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _person?.name ?? _userName,
+                        style: const TextStyle(
+                          color: AppColors.textWhite,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '현재 보유 포인트',
+                        style: TextStyle(
+                          color: AppColors.textWhite,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        Formatters.formatPoint(_person?.point ?? 0),
+                        style: const TextStyle(
+                          color: AppColors.pointGold,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          _buildDrawerItem(Icons.home, '홈', () => Navigator.pop(context)),
-          _buildDrawerItem(Icons.history, '사용 내역', () {
-            Navigator.pop(context);
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const UsageScreen()));
-          }),
-          _buildDrawerItem(Icons.qr_code_scanner, 'QR 스캔', () {
-            Navigator.pop(context);
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScanScreen()));
-          }),
-          const Divider(color: AppColors.textHint),
-          _buildDrawerItem(Icons.logout, '로그아웃', _logout, color: AppColors.error),
-          _buildDrawerItem(Icons.person_remove, '회원탈퇴', _deleteAccount, color: AppColors.error),
+          // 메뉴 아이템들
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _buildDrawerItem('홈페이지 바로가기', () {
+                  Navigator.pop(context);
+                  // 웹페이지로 이동
+                }),
+                _buildDrawerItem('사용 내역 조회', () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const UsageScreen()));
+                }),
+                _buildDrawerItem('포인트 충전', () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => ChargeScreen(
+                      userName: _userId,
+                      currentPoints: _person?.point ?? 0,
+                    ),
+                  )).then((_) => _loadUserData());
+                }),
+                _buildDrawerItem('포인트 가맹점', () {
+                  Navigator.pop(context);
+                }),
+                _buildDrawerItem('고객센터', () {
+                  Navigator.pop(context);
+                }),
+                const Divider(color: AppColors.divider),
+                _buildDrawerItem('로그아웃', _logout),
+                _buildDrawerItem('회원탈퇴', _deleteAccount, isDestructive: true),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap, {Color? color}) {
+  Widget _buildDrawerItem(String title, VoidCallback onTap, {bool isDestructive = false}) {
     return ListTile(
-      leading: Icon(icon, color: color ?? AppColors.textPrimary),
-      title: Text(title, style: TextStyle(color: color ?? AppColors.textPrimary)),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isDestructive ? AppColors.error : AppColors.textPrimary,
+          fontSize: 16,
+        ),
+      ),
       onTap: onTap,
     );
   }
-
-  Widget _buildPointCard() {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.paddingLarge),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.accent, AppColors.primaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppDimens.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                '보유 포인트',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: AppDimens.fontMedium,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  _person?.rate ?? 'USER',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: AppDimens.fontSmall,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            Formatters.formatPoint(_person?.point ?? 0),
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '${_person?.name ?? _userName} 님',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: AppDimens.fontMedium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuGrid() {
-    final menus = [
-      _MenuItemData(Icons.add_circle_outline, '충전 신청', AppColors.charge, () {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => ChargeScreen(
-            userName: _userId,
-            currentPoints: _person?.point ?? 0,
-          ),
-        )).then((_) => _loadUserData());
-      }),
-      _MenuItemData(Icons.payment, '결제하기', AppColors.buttonPrimary, () {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (_) => PaymentScreen(
-            userName: _userId,
-            userDisplayName: _person?.name ?? _userName,
-            currentPoints: _person?.point ?? 0,
-          ),
-        )).then((_) => _loadUserData());
-      }),
-      _MenuItemData(Icons.qr_code_scanner, 'QR 스캔', AppColors.warning, () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScanScreen()));
-      }),
-      _MenuItemData(Icons.history, '사용 내역', AppColors.textSecondary, () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const UsageScreen()));
-      }),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.2,
-      ),
-      itemCount: menus.length,
-      itemBuilder: (context, index) {
-        final item = menus[index];
-        return _buildMenuItem(item);
-      },
-    );
-  }
-
-  Widget _buildMenuItem(_MenuItemData item) {
-    return GestureDetector(
-      onTap: item.onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryDark,
-          borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-          border: Border.all(color: item.color.withOpacity(0.3), width: 1),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: item.color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(item.icon, color: item.color, size: 32),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              item.title,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppDimens.fontMedium,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuItemData {
-  final IconData icon;
-  final String title;
-  final Color color;
-  final VoidCallback onTap;
-
-  _MenuItemData(this.icon, this.title, this.color, this.onTap);
 }

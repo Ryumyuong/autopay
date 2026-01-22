@@ -104,8 +104,16 @@ class _UsageScreenState extends State<UsageScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(AppDimens.paddingMedium),
       decoration: BoxDecoration(
-        color: AppColors.primaryDark,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [

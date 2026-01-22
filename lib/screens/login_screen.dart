@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _login({bool isAdmin = false}) async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -92,135 +92,185 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimens.paddingLarge),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 60),
-                // 로고
+                const SizedBox(height: 40),
+                // 로고 이미지
                 Center(
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'AP',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  child: Image.asset(
+                    AppAssets.logo,
+                    height: 200,
+                    fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Center(
-                  child: Text(
-                    AppStrings.appName,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppDimens.fontXXLarge,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
 
                 // 아이디 입력
-                TextFormField(
-                  controller: _idController,
-                  style: const TextStyle(color: AppColors.textPrimary),
-                  decoration: _inputDecoration('아이디'),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return '아이디를 입력해주세요.';
-                    }
-                    return null;
-                  },
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: TextFormField(
+                    controller: _idController,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: _inputDecoration('아이디'),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return '아이디를 입력해주세요.';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
                 const SizedBox(height: 16),
 
                 // 비밀번호 입력
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(color: AppColors.textPrimary),
-                  decoration: _inputDecoration('비밀번호').copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: AppColors.textSecondary,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: _inputDecoration('비밀번호').copyWith(
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: AppColors.textHint,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
                       ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '비밀번호를 입력해주세요.';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '비밀번호를 입력해주세요.';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 32),
 
-                // 로그인 버튼
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.buttonPrimary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-                      ),
-                      disabledBackgroundColor: AppColors.buttonDisabled,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                // 로그인 버튼들
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      // 사업자회원 로그인 버튼 (검은색)
+                      Expanded(
+                        child: SizedBox(
+                          height: 60,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : () => _login(isAdmin: true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.buttonBlack,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 2,
                             ),
-                          )
-                        : const Text(
-                            AppStrings.login,
-                            style: TextStyle(
-                              fontSize: AppDimens.fontLarge,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    '사업자회원\n로그인',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // 일반회원 로그인 버튼 (파란색)
+                      Expanded(
+                        child: SizedBox(
+                          height: 60,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : () => _login(isAdmin: false),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.buttonPrimary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    '일반회원\n로그인',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-                // 회원가입 버튼
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SignupScreen()),
-                    );
-                  },
-                  child: const Text(
-                    '계정이 없으신가요? 회원가입',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: AppDimens.fontMedium,
-                    ),
+                // 회원가입 안내
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        '아직 회원이 아니신가요?',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SignupScreen()),
+                          );
+                        },
+                        child: const Text(
+                          ' 회원가입 ',
+                          style: TextStyle(
+                            color: AppColors.accent,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Text(
+                        '바로가기',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -231,29 +281,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textHint),
-      filled: true,
-      fillColor: AppColors.primaryDark,
+      labelText: hint,
+      labelStyle: const TextStyle(color: AppColors.textHint),
+      filled: false,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppColors.cardBorder),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
-        borderSide: const BorderSide(color: AppColors.buttonPrimary, width: 2),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppColors.accent, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+        borderRadius: BorderRadius.circular(4),
         borderSide: const BorderSide(color: AppColors.error, width: 1),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
+      ),
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.paddingMedium,
-        vertical: AppDimens.paddingMedium,
+        horizontal: 16,
+        vertical: 16,
       ),
     );
   }

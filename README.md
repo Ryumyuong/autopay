@@ -14,3 +14,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## 고객 지원 (Support)
+- 이메일: jpeter0911@gmail.com
+- 문의사항이 있으시면 [Issues](https://github.com/Ryumyuong/autopay/issues) 탭을 이용해주세요.

@@ -75,7 +75,7 @@ class _ChargeScreenState extends State<ChargeScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.primaryDark,
+        backgroundColor: AppColors.cardBackground,
         title: const Text('충전 신청 확인', style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
           '${Formatters.formatPoint(_currentAmount)}\n충전을 신청하시겠습니까?',
@@ -150,8 +150,16 @@ class _ChargeScreenState extends State<ChargeScreen> {
             margin: const EdgeInsets.all(AppDimens.paddingMedium),
             padding: const EdgeInsets.all(AppDimens.paddingMedium),
             decoration: BoxDecoration(
-              color: AppColors.primaryDark,
+              color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+              border: Border.all(color: AppColors.cardBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -276,7 +284,7 @@ class _ChargeScreenState extends State<ChargeScreen> {
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Material(
-          color: AppColors.primaryDark,
+          color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
           child: InkWell(
             onTap: enabled ? onPressed : null,
