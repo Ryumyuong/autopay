@@ -124,6 +124,15 @@ class ApiService {
     }
   }
 
+  // 관리자에게 충전 알림 푸시
+  Future<void> notifyAdminForCharge(ChargePushReq request) async {
+    try {
+      await _dio.post('/api/notify/charge', data: request.toJson());
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // 결제 알림
   Future<void> notifyPayment(PaymentPushReq request) async {
     try {
@@ -146,6 +155,54 @@ class ApiService {
   Future<void> deleteUser(String id) async {
     try {
       await _dio.delete('/user/$id');
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 회원탈퇴 알림 (관리자에게)
+  Future<void> notifyWithdraw(String userId, String userName) async {
+    try {
+      await _dio.post('/api/notify/withdraw', data: {
+        'userId': userId,
+        'userName': userName,
+      });
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 아이디 찾기 (Android와 동일)
+  Future<Map<String, dynamic>> findUserId(String name, String phone, String email) async {
+    try {
+      final response = await _dio.get('/api/user/findId', queryParameters: {
+        'name': name,
+        'phone': phone,
+        'email': email,
+      });
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 사용자 검색 (Android와 동일)
+  Future<List<Person>> searchUsers(String name) async {
+    try {
+      final response = await _dio.get('/api/user/search', queryParameters: {
+        'name': name,
+      });
+      final list = response.data as List;
+      return list.map((e) => Person.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 선물 알림 (Android와 동일)
+  Future<void> notifyGift(GiftPushReq request) async {
+    try {
+      await _dio.post('/api/notify/gift', data: request.toJson());
     } on DioException catch (e) {
       throw _handleError(e);
     }

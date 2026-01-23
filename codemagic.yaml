@@ -10,6 +10,7 @@ workflows:
       cocoapods: default
       groups:
         - app_store_credentials
+        - firebase_credentials  # Firebase 인증 정보 그룹 추가
       vars:
         APP_STORE_APP_ID: 0000000000  # App Store Connect에서 앱 ID 입력
         BUNDLE_ID: "com.auto.myapplication2"
@@ -22,17 +23,69 @@ workflows:
           keychain add-certificates
           xcode-project use-profiles
 
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
       - name: Get Flutter packages
         script: flutter packages pub get
+
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Set up Push Notification entitlements
+        script: |
+          # Release 빌드용 entitlements 설정
+          cat > ios/Runner/Runner.entitlements << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>aps-environment</key>
+            <string>production</string>
+          </dict>
+          </plist>
+          EOF
 
       - name: Build iOS
         script: flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log  # 빌드 로그 (디버깅용)
 
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false  # TestFlight 먼저, 나중에 true로 변경
+
+  # Android 빌드 워크플로우 (선택사항)
+  android-workflow:
+    name: Android Release
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: stable
+      groups:
+        - firebase_credentials  # Firebase 인증 정보
+      vars:
+        BUNDLE_ID: "com.auto.myapplication2"
+
+    scripts:
+      - name: Get Flutter packages
+        script: flutter packages pub get
+
+      - name: Build Android APK
+        script: flutter build apk --release
+
+      - name: Build Android App Bundle
+        script: flutter build appbundle --release
+
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab

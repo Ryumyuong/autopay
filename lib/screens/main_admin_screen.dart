@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 import '../services/token_store.dart';
@@ -9,7 +11,6 @@ import 'charge_screen.dart';
 import 'payment_screen.dart';
 import 'recharge_screen.dart';
 import 'usage_admin_screen.dart';
-import 'qr_scan_screen.dart';
 
 class MainAdminScreen extends StatefulWidget {
   const MainAdminScreen({super.key});
@@ -112,6 +113,14 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     if (confirm == true) {
       try {
         await _apiService.deleteUser(_userId);
+
+        // 관리자에게 탈퇴 알림 전송
+        try {
+          await _apiService.notifyWithdraw(_userId, _person?.company ?? _person?.name ?? _userName);
+        } catch (e) {
+          debugPrint('Withdraw notification failed: $e');
+        }
+
         await TokenStore.clearAll();
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
@@ -305,11 +314,18 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   Widget _buildSecondaryCards() {
     return Row(
       children: [
-        // 링크 카드
+        // 링크 카드 (결제 링크 복사)
         Expanded(
           child: GestureDetector(
             onTap: () {
-              // 링크 기능
+              final paymentLink = 'http://223.130.146.117:8080/pay.html?user_id=$_userId';
+              Clipboard.setData(ClipboardData(text: paymentLink));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('결제 링크가 복사되었습니다'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
             child: Card(
               elevation: 6,
@@ -329,16 +345,28 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
         const SizedBox(width: 10),
         // 계좌번호 카드
         Expanded(
-          child: Card(
-            elevation: 6,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.asset(
-                AppAssets.numbera,
-                fit: BoxFit.contain,
+          child: GestureDetector(
+            onTap: () {
+              const accountNumber = '3333-23-9022093';
+              Clipboard.setData(const ClipboardData(text: accountNumber));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('계좌번호가 복사되었습니다: $accountNumber'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  AppAssets.numbera,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
@@ -452,8 +480,12 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _buildDrawerItem('홈페이지 바로가기', () {
+                _buildDrawerItem('홈페이지 바로가기', () async {
                   Navigator.pop(context);
+                  final url = Uri.parse('https://autoagency.cafe24.com/skin-skin1');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
                 }),
                 _buildDrawerItem('사용 내역 조회', () {
                   Navigator.pop(context);
@@ -477,8 +509,19 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                     ),
                   )).then((_) => _loadUserData());
                 }),
-                _buildDrawerItem('고객센터', () {
+                _buildDrawerItem('포인트 가맹점', () async {
                   Navigator.pop(context);
+                  final url = Uri.parse('https://autoagency.cafe24.com/skin-skin1/board/PARTNERS/4/');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                }),
+                _buildDrawerItem('고객센터', () async {
+                  Navigator.pop(context);
+                  final url = Uri.parse('tel:010-4667-9776');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
                 }),
                 const Divider(color: AppColors.divider),
                 _buildDrawerItem('로그아웃', _logout),

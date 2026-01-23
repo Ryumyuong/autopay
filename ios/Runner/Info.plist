@@ -52,5 +52,12 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>QR 코드 스캔을 위해 카메라 접근이 필요합니다.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 </dict>
 </plist>

@@ -8,6 +8,8 @@ class Person {
   final String? company;
   final String? rate;
   final String? time;
+  final bool? withdrawn;
+  final String? phone;
 
   Person({
     this.id,
@@ -19,6 +21,8 @@ class Person {
     this.company,
     this.rate,
     this.time,
+    this.withdrawn,
+    this.phone,
   });
 
   factory Person.fromJson(Map<String, dynamic> json) {
@@ -48,6 +52,8 @@ class Person {
       company: json['company'] as String?,
       rate: json['rate'] as String?,
       time: timeStr,
+      withdrawn: json['withdrawn'] as bool?,
+      phone: json['phone'] as String?,
     );
   }
 
@@ -62,6 +68,8 @@ class Person {
       'company': company,
       'rate': rate,
       'time': time,
+      'withdrawn': withdrawn,
+      'phone': phone,
     };
   }
 
@@ -75,6 +83,8 @@ class Person {
     String? company,
     String? rate,
     String? time,
+    bool? withdrawn,
+    String? phone,
   }) {
     return Person(
       id: id ?? this.id,
@@ -86,6 +96,8 @@ class Person {
       company: company ?? this.company,
       rate: rate ?? this.rate,
       time: time ?? this.time,
+      withdrawn: withdrawn ?? this.withdrawn,
+      phone: phone ?? this.phone,
     );
   }
 

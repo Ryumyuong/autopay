@@ -1,30 +1,42 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
-import '../services/firebase_service.dart';
+import '../services/token_store.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
+import 'main_admin_screen.dart';
 
-class ChargeScreen extends StatefulWidget {
-  final String userName;
-  final int currentPoints;
-
-  const ChargeScreen({
-    super.key,
-    required this.userName,
-    required this.currentPoints,
-  });
+class ChargeAdminScreen extends StatefulWidget {
+  const ChargeAdminScreen({super.key});
 
   @override
-  State<ChargeScreen> createState() => _ChargeScreenState();
+  State<ChargeAdminScreen> createState() => _ChargeAdminScreenState();
 }
 
-class _ChargeScreenState extends State<ChargeScreen> {
+class _ChargeAdminScreenState extends State<ChargeAdminScreen> {
   final _apiService = ApiService();
+  final _nameController = TextEditingController();
   int _currentAmount = 0;
   bool _isLoading = false;
+  String _adminUserName = '';
 
   static const int _maxAmount = 9999999999;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdminInfo();
+  }
+
+  Future<void> _loadAdminInfo() async {
+    _adminUserName = await TokenStore.getUserId() ?? '';
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   void _addNumber(String number) {
     final currentValue = _currentAmount.toString();
@@ -57,21 +69,59 @@ class _ChargeScreenState extends State<ChargeScreen> {
     }
   }
 
-  Future<void> _requestCharge() async {
+  Future<void> _processPayment() async {
+    final targetName = _nameController.text.trim();
+
+    if (targetName.isEmpty) {
+      _showError('이름을 입력해주세요.');
+      return;
+    }
+
     if (_currentAmount <= 0) {
       _showError('충전 금액을 입력해주세요.');
       return;
     }
 
+    setState(() => _isLoading = true);
+
+    try {
+      // 이름으로 사용자 검색
+      final users = await _apiService.searchUsers(targetName);
+
+      // USER만 필터링 (ADMIN 제외, 탈퇴 유저 제외)
+      final validUsers = users.where((user) =>
+        user.name == targetName &&
+        user.withdrawn != true &&
+        user.rate != 'ADMIN'
+      ).toList();
+
+      if (validUsers.isEmpty) {
+        _showError('해당 이름의 일반 사용자를 찾을 수 없습니다.');
+        return;
+      }
+
+      // 찾은 사용자에게 충전
+      if (validUsers.length > 1) {
+        _showError('동명이인이 ${validUsers.length}명 있습니다. 첫 번째 사용자에게 충전합니다.');
+      }
+
+      await _showChargeConfirmDialog(validUsers.first, _currentAmount);
+    } catch (e) {
+      _showError('네트워크 오류: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _showChargeConfirmDialog(Person user, int amount) async {
+    final message = '충전 대상: ${user.name}\n현재 포인트: ${Formatters.formatPoint(user.point ?? 0)}\n충전 금액: ${Formatters.formatPoint(amount)}\n\n충전을 진행하시겠습니까?';
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.cardBackground,
-        title: const Text('충전 신청 확인', style: TextStyle(color: AppColors.textPrimary)),
-        content: Text(
-          '금액: ${Formatters.formatPoint(_currentAmount)}\n충전 신청을 진행하시겠습니까?',
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
+        title: const Text('충전 확인', style: TextStyle(color: AppColors.textPrimary)),
+        content: Text(message, style: const TextStyle(color: AppColors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -79,47 +129,60 @@ class _ChargeScreenState extends State<ChargeScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('충전 신청', style: TextStyle(color: AppColors.charge)),
+            child: const Text('충전', style: TextStyle(color: AppColors.charge)),
           ),
         ],
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm == true) {
+      await _completePayment(user, amount);
+    }
+  }
 
+  Future<void> _completePayment(Person user, int amount) async {
     setState(() => _isLoading = true);
 
     try {
-      final request = ChargeReqDTO(
-        amount: _currentAmount,
-        autopayId: widget.userName,
+      final userId = user.id ?? '';
+      final userName = user.name;
+      final currentPoints = user.point ?? 0;
+      final newPoints = currentPoints + amount;
+
+      final updatedPerson = Person(
+        id: userId,
+        name: userName,
+        point: newPoints,
+        rate: user.rate ?? 'USER',
+        company: user.company,
       );
-      final response = await _apiService.requestCharge(request);
 
-      final ok = response['ok'] as bool? ?? false;
-      if (ok) {
-        // 로컬 알림 표시 (Android와 동일)
-        await FirebaseService().notifyChargeComplete(_currentAmount);
+      await _apiService.updatePerson(userId, updatedPerson);
 
-        // 관리자에게 푸시 알림 전송
-        try {
-          await _apiService.notifyAdminForCharge(ChargePushReq(
-            userId: widget.userName,
-            amount: _currentAmount,
-          ));
-        } catch (e) {
-          debugPrint('Push notification failed: $e');
-        }
+      // 이력 기록
+      final history = History(
+        id: userId,
+        name: userName,
+        payment: amount,
+        time: '',
+        type: 'CHARGE',
+        company: user.company,
+        chargeName: '관리자',
+      );
 
-        if (!mounted) return;
-        _showSuccess('충전 신청이 완료되었습니다.');
-        Navigator.pop(context);
-      } else {
-        final message = response['message'] as String? ?? '충전 신청 실패';
-        _showError(message);
-      }
+      await _apiService.postHistory(userId, history);
+
+      if (!mounted) return;
+      _showSuccess('${userName}님에게 ${Formatters.formatPoint(amount)} 충전 완료!');
+
+      // 메인 화면으로 이동
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainAdminScreen()),
+        (route) => false,
+      );
     } catch (e) {
-      _showError(e.toString());
+      _showError('충전 실패: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -137,6 +200,17 @@ class _ChargeScreenState extends State<ChargeScreen> {
     );
   }
 
+  String get _buttonText {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return '이름을 입력해주세요';
+    if (_currentAmount <= 0) return '충전할 금액을 입력해주세요';
+    return '${Formatters.formatPoint(_currentAmount)} 충전하기';
+  }
+
+  bool get _isButtonEnabled {
+    return _nameController.text.trim().isNotEmpty && _currentAmount > 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,25 +223,36 @@ class _ChargeScreenState extends State<ChargeScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          '충전신청',
+          '관리자 충전',
           style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: Column(
         children: [
-          // 현재 포인트 표시
+          // 이름 입력 영역
           Padding(
             padding: const EdgeInsets.all(AppDimens.paddingLarge),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '나의 포인트: ${Formatters.formatPoint(widget.currentPoints)}',
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
+            child: TextField(
+              controller: _nameController,
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 18),
+              decoration: InputDecoration(
+                labelText: '충전 대상 이름',
+                labelStyle: const TextStyle(color: AppColors.textHint),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+                  borderSide: const BorderSide(color: AppColors.accent, width: 2),
                 ),
               ),
+              onChanged: (_) => setState(() {}),
             ),
           ),
 
@@ -198,7 +283,7 @@ class _ChargeScreenState extends State<ChargeScreen> {
           ),
           const SizedBox(height: 24),
 
-          // 고정 금액 버튼들 (Android와 동일)
+          // 고정 금액 버튼들
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingLarge),
             child: Row(
@@ -223,14 +308,14 @@ class _ChargeScreenState extends State<ChargeScreen> {
             ),
           ),
 
-          // 충전 신청 버튼
+          // 충전 버튼
           Padding(
             padding: const EdgeInsets.all(AppDimens.paddingMedium),
             child: SizedBox(
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: (_isLoading || _currentAmount <= 0) ? null : _requestCharge,
+                onPressed: (_isLoading || !_isButtonEnabled) ? null : _processPayment,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.charge,
                   foregroundColor: Colors.white,
@@ -242,9 +327,7 @@ class _ChargeScreenState extends State<ChargeScreen> {
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                     : Text(
-                        _currentAmount > 0
-                            ? '${Formatters.formatPoint(_currentAmount)} 충전하기'
-                            : '충전할 금액을 입력해주세요',
+                        _buttonText,
                         style: const TextStyle(fontSize: AppDimens.fontLarge, fontWeight: FontWeight.bold),
                       ),
               ),
