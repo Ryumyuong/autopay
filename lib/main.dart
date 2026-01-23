@@ -7,8 +7,12 @@ import 'utils/constants.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase 초기화
-  await FirebaseService().initialize();
+  // Firebase 초기화 (실패해도 앱은 실행)
+  try {
+    await FirebaseService().initialize();
+  } catch (e) {
+    debugPrint('Firebase init error in main: $e');
+  }
 
   // 상태바 스타일 설정
   SystemChrome.setSystemUIOverlayStyle(
@@ -20,10 +24,14 @@ void main() async {
   );
 
   // 세로 모드 고정
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  try {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  } catch (e) {
+    debugPrint('Orientation setting error: $e');
+  }
 
   runApp(const AutoPayApp());
 }

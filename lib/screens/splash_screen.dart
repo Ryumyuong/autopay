@@ -20,33 +20,50 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkLoginStatus() async {
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return;
-
-    final isLoggedIn = await TokenStore.isLoggedIn();
-    if (!mounted) return;
-
-    if (isLoggedIn) {
-      final rate = await TokenStore.getUserRate();
       if (!mounted) return;
 
-      if (rate == 'ADMIN') {
+      bool isLoggedIn = false;
+      String? rate;
+
+      try {
+        isLoggedIn = await TokenStore.isLoggedIn();
+        if (isLoggedIn) {
+          rate = await TokenStore.getUserRate();
+        }
+      } catch (e) {
+        debugPrint('TokenStore error: $e');
+        isLoggedIn = false;
+      }
+
+      if (!mounted) return;
+
+      if (isLoggedIn && rate == 'ADMIN') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MainAdminScreen()),
         );
-      } else {
+      } else if (isLoggedIn) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MainScreen()),
         );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
       }
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+    } catch (e) {
+      debugPrint('Splash screen error: $e');
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     }
   }
 
