@@ -100,7 +100,11 @@ class _ChargeScreenState extends State<ChargeScreen> {
       final ok = response['ok'] as bool? ?? false;
       if (ok) {
         // 로컬 알림 표시 (Android와 동일)
-        await FirebaseService().notifyChargeComplete(_currentAmount);
+        try {
+          await FirebaseService().notifyChargeComplete(_currentAmount);
+        } catch (e) {
+          debugPrint('Local notification failed: $e');
+        }
 
         // 관리자에게 푸시 알림 전송
         try {

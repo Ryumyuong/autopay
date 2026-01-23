@@ -23,7 +23,12 @@ class FirebaseService {
   factory FirebaseService() => _instance;
   FirebaseService._internal();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _messaging;
+  FirebaseMessaging get messaging {
+    _messaging ??= FirebaseMessaging.instance;
+    return _messaging!;
+  }
+
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   final ApiService _apiService = ApiService();
 
@@ -42,13 +47,18 @@ class FirebaseService {
     importance: Importance.high,
   );
 
+  bool _isInitialized = false;
+
   /// Firebase 초기화
   Future<void> initialize() async {
+    if (_isInitialized) return;
+
     try {
       // Firebase가 이미 초기화되었는지 확인
       if (Firebase.apps.isEmpty) {
         await Firebase.initializeApp();
       }
+      _isInitialized = true;
 
       // 백그라운드 핸들러 설정
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -68,13 +78,30 @@ class FirebaseService {
       debugPrint('Firebase initialized successfully');
     } catch (e) {
       debugPrint('Firebase initialization error: $e');
+      _isInitialized = false;
       // Firebase 초기화 실패해도 앱은 계속 실행 (푸시 기능만 비활성화)
+    }
+  }
+
+  /// Firebase 초기화 확인 및 재시도
+  Future<bool> ensureInitialized() async {
+    if (_isInitialized && Firebase.apps.isNotEmpty) return true;
+
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
+      _isInitialized = true;
+      return true;
+    } catch (e) {
+      debugPrint('Firebase ensureInitialized error: $e');
+      return false;
     }
   }
 
   /// 알림 권한 요청
   Future<void> _requestPermission() async {
-    final settings = await _messaging.requestPermission(
+    final settings = await messaging.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -168,7 +195,7 @@ class FirebaseService {
   /// FCM 토큰 가져오기
   Future<String?> getToken() async {
     try {
-      final token = await _messaging.getToken();
+      final token = await messaging.getToken();
       debugPrint('FCM Token: $token');
       return token;
     } catch (e) {
@@ -208,7 +235,7 @@ class FirebaseService {
 
   /// 토큰 갱신 리스너
   void listenToTokenRefresh() {
-    _messaging.onTokenRefresh.listen((newToken) async {
+    messaging.onTokenRefresh.listen((newToken) async {
       debugPrint('FCM Token refreshed: $newToken');
 
       final userId = await TokenStore.getUserId();
