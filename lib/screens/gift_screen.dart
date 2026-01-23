@@ -370,6 +370,8 @@ class _GiftScreenState extends State<GiftScreen> {
                     decoration: InputDecoration(
                       hintText: '받는 분 이름 검색',
                       hintStyle: const TextStyle(color: AppColors.textHint),
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
                         borderSide: const BorderSide(color: AppColors.cardBorder),
@@ -377,6 +379,10 @@ class _GiftScreenState extends State<GiftScreen> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
                         borderSide: const BorderSide(color: AppColors.cardBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
                       ),
                     ),
                     onSubmitted: (_) => _performSearch(),

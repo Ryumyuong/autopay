@@ -94,7 +94,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: backgroundColor,
-      endDrawer: _buildDrawer(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary))
           : SafeArea(
@@ -176,19 +175,8 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
             height: 50,
             fit: BoxFit.contain,
           ),
-          // 메뉴 버튼
-          GestureDetector(
-            onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: _isAdmin ? Colors.white.withOpacity(0.1) : const Color(0xFFF5F5F5),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.menu, color: textColor),
-            ),
-          ),
+          // 빈 공간 (균형 맞추기)
+          const SizedBox(width: 48, height: 48),
         ],
       ),
     );
