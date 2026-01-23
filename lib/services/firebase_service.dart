@@ -8,8 +8,14 @@ import 'token_store.dart';
 // 백그라운드 메시지 핸들러 (top-level function이어야 함)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  debugPrint('Background message: ${message.notification?.title}');
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+    debugPrint('Background message: ${message.notification?.title}');
+  } catch (e) {
+    debugPrint('Background handler error: $e');
+  }
 }
 
 class FirebaseService {
@@ -39,7 +45,10 @@ class FirebaseService {
   /// Firebase 초기화
   Future<void> initialize() async {
     try {
-      await Firebase.initializeApp();
+      // Firebase가 이미 초기화되었는지 확인
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
 
       // 백그라운드 핸들러 설정
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -59,6 +68,7 @@ class FirebaseService {
       debugPrint('Firebase initialized successfully');
     } catch (e) {
       debugPrint('Firebase initialization error: $e');
+      // Firebase 초기화 실패해도 앱은 계속 실행 (푸시 기능만 비활성화)
     }
   }
 

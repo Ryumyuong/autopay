@@ -107,7 +107,8 @@ class ApiService {
   Future<void> registerUserToken(String userId, String token) async {
     try {
       await _dio.post('/api/device/registerUser', data: {
-        userId: token,
+        'userId': userId,
+        'token': token,
       });
     } on DioException catch (e) {
       throw _handleError(e);
@@ -209,8 +210,9 @@ class ApiService {
   }
 
   String _handleError(DioException e) {
-    if (e.response != null) {
-      final statusCode = e.response!.statusCode;
+    final response = e.response;
+    if (response != null) {
+      final statusCode = response.statusCode ?? 0;
       switch (statusCode) {
         case 400:
           return '잘못된 요청입니다.';

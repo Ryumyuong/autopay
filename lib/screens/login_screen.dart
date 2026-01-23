@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/models.dart';
@@ -198,7 +199,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login({bool isAdmin = false}) async {
-    if (!_formKey.currentState!.validate()) return;
+    final formState = _formKey.currentState;
+    if (formState == null || !formState.validate()) return;
 
     setState(() => _isLoading = true);
 
@@ -213,20 +215,26 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.success && response.person != null) {
         final person = response.person!;
 
+        // 먼저 로그인 정보 저장 (FCM 토큰 등록 전에 완료되어야 함)
         await TokenStore.saveLoginInfo(
           userId: person.id ?? '',
           userName: person.name ?? '',
           rate: person.rate ?? 'USER',
         );
 
-        // FCM 토큰 등록 (Android와 동일)
-        final firebaseService = FirebaseService();
-        if (person.isAdmin) {
-          await firebaseService.registerAdminToken();
-        } else {
-          await firebaseService.registerUserToken();
+        // FCM 토큰 등록 (로그인 정보 저장 후 실행)
+        try {
+          final firebaseService = FirebaseService();
+          if (person.isAdmin) {
+            await firebaseService.registerAdminToken();
+          } else {
+            await firebaseService.registerUserToken();
+          }
+          firebaseService.listenToTokenRefresh();
+        } catch (e) {
+          // FCM 등록 실패해도 로그인은 진행
+          debugPrint('FCM registration failed: $e');
         }
-        firebaseService.listenToTokenRefresh();
 
         if (!mounted) return;
 
