@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 import '../services/token_store.dart';
+import '../services/deep_link_service.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
 import 'login_screen.dart';
@@ -11,9 +13,12 @@ import 'charge_screen.dart';
 import 'usage_screen.dart';
 import 'qr_display_screen.dart';
 import 'gift_screen.dart';
+import 'payment_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final String? initialPayeeId;
+
+  const MainScreen({super.key, this.initialPayeeId});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -22,6 +27,8 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final _apiService = ApiService();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _deepLinkService = DeepLinkService();
+  late final StreamSubscription<String> _deepLinkSubscription;
 
   Person? _person;
   bool _isLoading = true;
@@ -31,7 +38,46 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadUserData().then((_) {
+      // 데이터 로드 후 딥링크 결제 요청 처리
+      _checkPendingPayment();
+    });
+
+    // 앱 실행 중 딥링크 수신 리스너 (웜 스타트)
+    _deepLinkSubscription = _deepLinkService.paymentStream.listen((payeeId) {
+      if (mounted && payeeId.isNotEmpty) {
+        _navigateToPayment(payeeId);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _deepLinkSubscription.cancel();
+    super.dispose();
+  }
+
+  void _checkPendingPayment() {
+    // 위젯 파라미터로 전달된 결제 요청 처리
+    final payeeId = widget.initialPayeeId;
+    if (payeeId != null && payeeId.isNotEmpty && mounted) {
+      _navigateToPayment(payeeId);
+    }
+  }
+
+  void _navigateToPayment(String payeeId) {
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentScreen(
+          userName: _userId,
+          userDisplayName: _person?.name ?? _userName,
+          currentPoints: _person?.point ?? 0,
+          initialPayeeId: payeeId,
+        ),
+      ),
+    ).then((_) => _loadUserData());
   }
 
   Future<void> _loadUserData() async {
@@ -109,7 +155,7 @@ class _MainScreenState extends State<MainScreen> {
 
     if (confirm == true && mounted) {
       try {
-        await _apiService.deleteUser(_userId);
+        await _apiService.withdrawUser(_userId);
         if (!mounted) return;
 
         // 관리자에게 탈퇴 알림 전송
@@ -121,6 +167,9 @@ class _MainScreenState extends State<MainScreen> {
 
         await TokenStore.clearAll();
         if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('회원탈퇴가 완료되었습니다')),
+        );
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const LoginScreen()),

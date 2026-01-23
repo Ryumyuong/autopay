@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/splash_screen.dart';
 import 'services/firebase_service.dart';
+import 'services/deep_link_service.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -12,6 +13,13 @@ void main() async {
     await FirebaseService().initialize();
   } catch (e) {
     debugPrint('Firebase init error in main: $e');
+  }
+
+  // 딥링크 서비스 초기화
+  try {
+    await DeepLinkService().initialize();
+  } catch (e) {
+    debugPrint('DeepLink init error in main: $e');
   }
 
   // 상태바 스타일 설정

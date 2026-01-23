@@ -112,7 +112,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
     if (confirm == true && mounted) {
       try {
-        await _apiService.deleteUser(_userId);
+        await _apiService.withdrawUser(_userId);
         if (!mounted) return;
 
         // 관리자에게 탈퇴 알림 전송
@@ -124,6 +124,9 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
         await TokenStore.clearAll();
         if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('회원탈퇴가 완료되었습니다')),
+        );
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const LoginScreen()),

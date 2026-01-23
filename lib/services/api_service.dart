@@ -153,9 +153,10 @@ class ApiService {
   }
 
   // 회원탈퇴
-  Future<void> deleteUser(String id) async {
+  Future<Map<String, dynamic>> withdrawUser(String id) async {
     try {
-      await _dio.delete('/user/$id');
+      final response = await _dio.post('/api/user/withdraw/$id');
+      return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleError(e);
     }

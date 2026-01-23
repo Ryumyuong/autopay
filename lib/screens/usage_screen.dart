@@ -158,7 +158,7 @@ class _UsageScreenState extends State<UsageScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '$prefix${Formatters.formatCurrency(history.payment)}',
+                '$prefix${Formatters.formatCurrency((history.payment ?? 0).abs())}',
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.bold,

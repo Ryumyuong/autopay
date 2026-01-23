@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/token_store.dart';
+import '../services/deep_link_service.dart';
 import '../utils/constants.dart';
 import 'login_screen.dart';
 import 'main_screen.dart';
@@ -27,11 +28,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
       bool isLoggedIn = false;
       String? rate;
+      String? userId;
 
       try {
         isLoggedIn = await TokenStore.isLoggedIn();
         if (isLoggedIn) {
           rate = await TokenStore.getUserRate();
+          userId = await TokenStore.getUserId();
         }
       } catch (e) {
         debugPrint('TokenStore error: $e');
@@ -40,16 +43,29 @@ class _SplashScreenState extends State<SplashScreen> {
 
       if (!mounted) return;
 
+      // 딥링크로 결제 요청이 있는지 확인
+      final pendingPayeeId = DeepLinkService().consumePendingPaymentUserId();
+
       if (isLoggedIn && rate == 'ADMIN') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MainAdminScreen()),
         );
       } else if (isLoggedIn) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
+        // 딥링크 결제 요청이 있으면 결제 화면으로 이동
+        if (pendingPayeeId != null && userId != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MainScreen(initialPayeeId: pendingPayeeId),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MainScreen()),
+          );
+        }
       } else {
         Navigator.pushReplacement(
           context,

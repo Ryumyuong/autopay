@@ -8,12 +8,14 @@ class PaymentScreen extends StatefulWidget {
   final String userName;
   final String userDisplayName;
   final int currentPoints;
+  final String? initialPayeeId;
 
   const PaymentScreen({
     super.key,
     required this.userName,
     required this.userDisplayName,
     required this.currentPoints,
+    this.initialPayeeId,
   });
 
   @override
@@ -31,6 +33,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   static const int _step1M = 1000000;
   static const int _maxAmount = 9999999999;
+
+  @override
+  void initState() {
+    super.initState();
+    // 딥링크에서 전달된 payeeId가 있으면 자동 검색
+    if (widget.initialPayeeId != null && widget.initialPayeeId!.isNotEmpty) {
+      _payeeIdController.text = widget.initialPayeeId!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _searchPayee();
+      });
+    }
+  }
 
   @override
   void dispose() {
