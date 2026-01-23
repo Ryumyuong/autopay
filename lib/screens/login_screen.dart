@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/models.dart';
@@ -125,12 +124,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final result = await _apiService.findUserId(name, phone, email);
+      if (!mounted) return;
+
       final foundId = result['id'];
 
       Navigator.pop(dialogContext);
 
       if (foundId != null && foundId.isNotEmpty) {
-        if (!mounted) return;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -153,7 +153,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _showError('일치하는 회원 정보가 없습니다.');
       }
     } catch (e) {
-      _showError('일치하는 회원 정보가 없습니다.');
+      if (mounted) {
+        _showError('일치하는 회원 정보가 없습니다.');
+      }
     }
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
-import '../services/token_store.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
 import 'main_admin_screen.dart';
@@ -18,19 +17,8 @@ class _ChargeAdminScreenState extends State<ChargeAdminScreen> {
   final _nameController = TextEditingController();
   int _currentAmount = 0;
   bool _isLoading = false;
-  String _adminUserName = '';
 
   static const int _maxAmount = 9999999999;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAdminInfo();
-  }
-
-  Future<void> _loadAdminInfo() async {
-    _adminUserName = await TokenStore.getUserId() ?? '';
-  }
 
   @override
   void dispose() {
@@ -87,6 +75,7 @@ class _ChargeAdminScreenState extends State<ChargeAdminScreen> {
     try {
       // 이름으로 사용자 검색
       final users = await _apiService.searchUsers(targetName);
+      if (!mounted) return;
 
       // USER만 필터링 (ADMIN 제외, 탈퇴 유저 제외)
       final validUsers = users.where((user) =>
@@ -107,14 +96,19 @@ class _ChargeAdminScreenState extends State<ChargeAdminScreen> {
 
       await _showChargeConfirmDialog(validUsers.first, _currentAmount);
     } catch (e) {
-      _showError('네트워크 오류: $e');
+      if (mounted) {
+        _showError('네트워크 오류: $e');
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _showChargeConfirmDialog(Person user, int amount) async {
-    final message = '충전 대상: ${user.name}\n현재 포인트: ${Formatters.formatPoint(user.point ?? 0)}\n충전 금액: ${Formatters.formatPoint(amount)}\n\n충전을 진행하시겠습니까?';
+    final userName = user.name ?? '알 수 없음';
+    final message = '충전 대상: $userName\n현재 포인트: ${Formatters.formatPoint(user.point ?? 0)}\n충전 금액: ${Formatters.formatPoint(amount)}\n\n충전을 진행하시겠습니까?';
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -135,17 +129,28 @@ class _ChargeAdminScreenState extends State<ChargeAdminScreen> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm == true && mounted) {
       await _completePayment(user, amount);
     }
   }
 
   Future<void> _completePayment(Person user, int amount) async {
+    final userId = user.id;
+    final userName = user.name;
+
+    if (userId == null || userId.isEmpty) {
+      _showError('사용자 ID를 찾을 수 없습니다.');
+      return;
+    }
+
+    if (userName == null || userName.isEmpty) {
+      _showError('사용자 이름을 찾을 수 없습니다.');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      final userId = user.id ?? '';
-      final userName = user.name;
       final currentPoints = user.point ?? 0;
       final newPoints = currentPoints + amount;
 
@@ -158,6 +163,7 @@ class _ChargeAdminScreenState extends State<ChargeAdminScreen> {
       );
 
       await _apiService.updatePerson(userId, updatedPerson);
+      if (!mounted) return;
 
       // 이력 기록
       final history = History(
@@ -171,8 +177,8 @@ class _ChargeAdminScreenState extends State<ChargeAdminScreen> {
       );
 
       await _apiService.postHistory(userId, history);
-
       if (!mounted) return;
+
       _showSuccess('${userName}님에게 ${Formatters.formatPoint(amount)} 충전 완료!');
 
       // 메인 화면으로 이동
@@ -182,9 +188,13 @@ class _ChargeAdminScreenState extends State<ChargeAdminScreen> {
         (route) => false,
       );
     } catch (e) {
-      _showError('충전 실패: $e');
+      if (mounted) {
+        _showError('충전 실패: $e');
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

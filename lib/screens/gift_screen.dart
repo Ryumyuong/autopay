@@ -50,7 +50,9 @@ class _GiftScreenState extends State<GiftScreen> {
     if (_myUserId.isNotEmpty) {
       try {
         final person = await _apiService.getPerson(_myUserId);
-        setState(() => _myPoints = person.point ?? 0);
+        if (mounted) {
+          setState(() => _myPoints = person.point ?? 0);
+        }
       } catch (e) {
         debugPrint('Error loading user info: $e');
       }
@@ -74,6 +76,7 @@ class _GiftScreenState extends State<GiftScreen> {
 
     try {
       final users = await _apiService.searchUsers(searchName);
+      if (!mounted) return;
 
       // 자기 자신 제외, 탈퇴 유저 제외, USER만 포함
       final filteredUsers = users.where((user) =>
@@ -90,9 +93,13 @@ class _GiftScreenState extends State<GiftScreen> {
         _showError('검색 결과가 없습니다');
       }
     } catch (e) {
-      _showError('검색 실패: $e');
+      if (mounted) {
+        _showError('검색 실패: $e');
+      }
     } finally {
-      setState(() => _isSearching = false);
+      if (mounted) {
+        setState(() => _isSearching = false);
+      }
     }
   }
 
@@ -144,8 +151,15 @@ class _GiftScreenState extends State<GiftScreen> {
   }
 
   Future<void> _processGift() async {
-    if (_selectedUser == null) {
+    final receiver = _selectedUser;
+    if (receiver == null) {
       _showError('받는 분을 선택해주세요');
+      return;
+    }
+
+    final receiverId = receiver.id;
+    if (receiverId == null || receiverId.isEmpty) {
+      _showError('받는 분의 ID를 찾을 수 없습니다');
       return;
     }
 
@@ -159,8 +173,8 @@ class _GiftScreenState extends State<GiftScreen> {
       return;
     }
 
-    final receiver = _selectedUser!;
-    final message = '받는 분: ${receiver.name}\n선물 금액: ${Formatters.formatPoint(_currentAmount)}\n\n선물을 보내시겠습니까?';
+    final receiverName = receiver.name ?? '알 수 없음';
+    final message = '받는 분: $receiverName\n선물 금액: ${Formatters.formatPoint(_currentAmount)}\n\n선물을 보내시겠습니까?';
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -181,17 +195,15 @@ class _GiftScreenState extends State<GiftScreen> {
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
-    await _executeGift(receiver, _currentAmount);
+    await _executeGift(receiverId, receiverName, receiver.point ?? 0, _currentAmount);
   }
 
-  Future<void> _executeGift(Person receiver, int amount) async {
+  Future<void> _executeGift(String receiverId, String receiverName, int receiverCurrentPoint, int amount) async {
     setState(() => _isLoading = true);
 
     try {
-      final receiverId = receiver.id ?? '';
-
       // Step 1: 내 포인트 차감
       final myNewPoint = _myPoints - amount;
       final myUpdatedPerson = Person(
@@ -201,6 +213,8 @@ class _GiftScreenState extends State<GiftScreen> {
       );
       await _apiService.updatePerson(_myUserId, myUpdatedPerson);
 
+      if (!mounted) return;
+
       // Step 2: 내 이력 저장 (GIFT_SEND)
       final senderHistory = History(
         id: _myUserId,
@@ -208,29 +222,32 @@ class _GiftScreenState extends State<GiftScreen> {
         payment: -amount,
         time: '',
         type: 'GIFT_SEND',
-        chargeName: receiver.name,
+        chargeName: receiverName,
       );
       await _apiService.postHistory(_myUserId, senderHistory);
+      if (!mounted) return;
 
       // Step 3: 상대 포인트 증가
-      final receiverNewPoint = (receiver.point ?? 0) + amount;
+      final receiverNewPoint = receiverCurrentPoint + amount;
       final receiverUpdatedPerson = Person(
         id: receiverId,
-        name: receiver.name,
+        name: receiverName,
         point: receiverNewPoint,
       );
       await _apiService.updatePerson(receiverId, receiverUpdatedPerson);
+      if (!mounted) return;
 
       // Step 4: 상대 이력 저장 (GIFT_RECEIVE)
       final receiverHistory = History(
         id: receiverId,
-        name: receiver.name,
+        name: receiverName,
         payment: amount,
         time: '',
         type: 'GIFT_RECEIVE',
         chargeName: _myUserName,
       );
       await _apiService.postHistory(receiverId, receiverHistory);
+      if (!mounted) return;
 
       // Step 5: 푸시 알림
       try {
@@ -238,7 +255,7 @@ class _GiftScreenState extends State<GiftScreen> {
           senderId: _myUserId,
           senderName: _myUserName,
           receiverId: receiverId,
-          receiverName: receiver.name,
+          receiverName: receiverName,
           amount: amount,
         ));
       } catch (e) {
@@ -255,9 +272,13 @@ class _GiftScreenState extends State<GiftScreen> {
         (route) => false,
       );
     } catch (e) {
-      _showError('선물 실패: $e');
+      if (mounted) {
+        _showError('선물 실패: $e');
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

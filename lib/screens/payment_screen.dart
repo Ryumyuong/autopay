@@ -107,8 +107,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _processPayment() async {
-    if (!_isPayeeValid || _payee == null) {
+    final payee = _payee;
+    if (!_isPayeeValid || payee == null) {
       _showError('결제 대상을 먼저 검색해주세요.');
+      return;
+    }
+
+    final payeeId = payee.id;
+    if (payeeId == null || payeeId.isEmpty) {
+      _showError('결제 대상 ID를 찾을 수 없습니다.');
       return;
     }
 
@@ -122,7 +129,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    final payeeName = _payee!.isAdmin ? (_payee!.company ?? _payee!.name) : _payee!.name;
+    final payeeName = payee.isAdmin
+        ? (payee.company ?? payee.name ?? 'Unknown')
+        : (payee.name ?? 'Unknown');
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -146,7 +155,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
     setState(() => _isLoading = true);
 
@@ -159,15 +168,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
         point: myNewPoints,
       );
       await _apiService.updatePerson(widget.userName, myPerson);
+      if (!mounted) return;
 
       // 2. 상대방 포인트 증가
-      final payeeNewPoints = (_payee!.point ?? 0) + _currentAmount;
+      final payeeNewPoints = (payee.point ?? 0) + _currentAmount;
       final payeePerson = Person(
-        id: _payee!.id,
-        name: _payee!.name,
+        id: payeeId,
+        name: payee.name,
         point: payeeNewPoints,
       );
-      await _apiService.updatePerson(_payee!.id!, payeePerson);
+      await _apiService.updatePerson(payeeId, payeePerson);
+      if (!mounted) return;
 
       // 3. 내 거래 내역 저장 (PAYMENT)
       final myHistory = History(
@@ -175,39 +186,50 @@ class _PaymentScreenState extends State<PaymentScreen> {
         name: widget.userDisplayName,
         payment: _currentAmount,
         type: 'PAYMENT',
-        company: _payee!.company,
+        company: payee.company,
         chargeName: payeeName,
       );
       await _apiService.postHistory(widget.userName, myHistory);
+      if (!mounted) return;
 
       // 4. 상대방 거래 내역 저장 (CHARGE)
       final payeeHistory = History(
-        id: _payee!.id,
-        name: _payee!.name,
+        id: payeeId,
+        name: payee.name,
         payment: _currentAmount,
         type: 'CHARGE',
         company: null,
         chargeName: widget.userDisplayName,
       );
-      await _apiService.postHistory(_payee!.id!, payeeHistory);
+      await _apiService.postHistory(payeeId, payeeHistory);
+      if (!mounted) return;
 
       // 5. 결제 알림 발송
-      final pushReq = PaymentPushReq(
-        payerId: widget.userName,
-        payerName: widget.userDisplayName,
-        payeeId: _payee!.id!,
-        payeeName: payeeName,
-        amount: _currentAmount,
-      );
-      await _apiService.notifyPayment(pushReq);
+      try {
+        final pushReq = PaymentPushReq(
+          payerId: widget.userName,
+          payerName: widget.userDisplayName,
+          payeeId: payeeId,
+          payeeName: payeeName,
+          amount: _currentAmount,
+        );
+        await _apiService.notifyPayment(pushReq);
+      } catch (e) {
+        // 푸시 알림 실패해도 결제는 성공으로 처리
+        debugPrint('Push notification failed: $e');
+      }
 
       if (!mounted) return;
       _showSuccess('결제가 완료되었습니다.');
       Navigator.pop(context);
     } catch (e) {
-      _showError('결제 처리 중 오류가 발생했습니다: $e');
+      if (mounted) {
+        _showError('결제 처리 중 오류가 발생했습니다: $e');
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

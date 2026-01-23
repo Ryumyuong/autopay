@@ -41,7 +41,7 @@ class _MainScreenState extends State<MainScreen> {
       _userId = await TokenStore.getUserId() ?? '';
       _userName = await TokenStore.getUserName() ?? '';
 
-      if (_userId.isNotEmpty) {
+      if (_userId.isNotEmpty && mounted) {
         _person = await _apiService.getPerson(_userId);
       }
     } catch (e) {
@@ -73,7 +73,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm == true && mounted) {
       await TokenStore.clearAll();
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
@@ -107,9 +107,10 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm == true && mounted) {
       try {
         await _apiService.deleteUser(_userId);
+        if (!mounted) return;
 
         // 관리자에게 탈퇴 알림 전송
         try {

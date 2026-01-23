@@ -25,9 +25,12 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     final isLoggedIn = await TokenStore.isLoggedIn();
+    if (!mounted) return;
 
     if (isLoggedIn) {
       final rate = await TokenStore.getUserRate();
+      if (!mounted) return;
+
       if (rate == 'ADMIN') {
         Navigator.pushReplacement(
           context,

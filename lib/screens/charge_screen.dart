@@ -85,7 +85,7 @@ class _ChargeScreenState extends State<ChargeScreen> {
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
     setState(() => _isLoading = true);
 
@@ -95,6 +95,7 @@ class _ChargeScreenState extends State<ChargeScreen> {
         autopayId: widget.userName,
       );
       final response = await _apiService.requestCharge(request);
+      if (!mounted) return;
 
       final ok = response['ok'] as bool? ?? false;
       if (ok) {
@@ -119,9 +120,13 @@ class _ChargeScreenState extends State<ChargeScreen> {
         _showError(message);
       }
     } catch (e) {
-      _showError(e.toString());
+      if (mounted) {
+        _showError(e.toString());
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
