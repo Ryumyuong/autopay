@@ -422,7 +422,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: (_isLoading || _currentAmount <= 0 || !_isPayeeValid) ? null : _processPayment,
+                onPressed: (_isLoading || _currentAmount <= 0 || !_isPayeeValid || _currentAmount > widget.currentPoints) ? null : _processPayment,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.buttonPrimary,
                   foregroundColor: Colors.white,
@@ -434,9 +434,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                     : Text(
-                        _currentAmount > 0 && _isPayeeValid
-                            ? '${Formatters.formatPoint(_currentAmount)} 결제하기'
-                            : '결제할 금액을 설정하세요',
+                        _currentAmount > widget.currentPoints
+                            ? '포인트가 부족합니다'
+                            : (_currentAmount > 0 && _isPayeeValid
+                                ? '${Formatters.formatPoint(_currentAmount)} 결제하기'
+                                : '결제할 금액을 설정하세요'),
                         style: const TextStyle(fontSize: AppDimens.fontLarge, fontWeight: FontWeight.bold),
                       ),
               ),
