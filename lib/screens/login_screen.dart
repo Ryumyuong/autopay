@@ -207,24 +207,35 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final userId = _idController.text.trim();
       final request = LoginRequest(
-        id: _idController.text.trim(),
+        id: userId,
         password: _passwordController.text,
       );
 
       final response = await _apiService.login(request);
 
-      if (response.success && response.person != null) {
-        final person = response.person!;
+      if (response.success) {
+        // 로그인 성공 후 별도로 사용자 정보 조회 (Android와 동일)
+        final person = await _apiService.getPerson(userId);
 
-        // 먼저 로그인 정보 저장 (FCM 토큰 등록 전에 완료되어야 함)
+        // rate 확인 (클릭한 버튼과 실제 rate 일치 여부)
+        if (isAdmin && person.rate != 'ADMIN') {
+          _showError('관리자 계정으로 로그인해주세요.');
+          return;
+        } else if (!isAdmin && person.rate != 'USER') {
+          _showError('이용자 계정으로 로그인해주세요.');
+          return;
+        }
+
+        // 로그인 정보 저장
         await TokenStore.saveLoginInfo(
-          userId: person.id ?? '',
+          userId: person.id ?? userId,
           userName: person.name ?? '',
           rate: person.rate ?? 'USER',
         );
 
-        // FCM 토큰 등록 (로그인 정보 저장 후 실행)
+        // FCM 토큰 등록
         try {
           final firebaseService = FirebaseService();
           if (person.isAdmin) {
@@ -234,7 +245,6 @@ class _LoginScreenState extends State<LoginScreen> {
           }
           firebaseService.listenToTokenRefresh();
         } catch (e) {
-          // FCM 등록 실패해도 로그인은 진행
           debugPrint('FCM registration failed: $e');
         }
 
@@ -252,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        _showError(response.message ?? '로그인에 실패했습니다.');
+        _showError(response.message ?? '아이디 또는 비밀번호가 잘못되었습니다.');
       }
     } catch (e) {
       _showError(e.toString());
