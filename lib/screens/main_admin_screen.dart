@@ -8,6 +8,7 @@ import '../utils/constants.dart';
 import '../utils/formatters.dart';
 import 'login_screen.dart';
 import 'charge_screen.dart';
+import 'charge_admin_screen.dart';
 import 'payment_screen.dart';
 import 'recharge_screen.dart';
 import 'usage_admin_screen.dart';
@@ -516,12 +517,19 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                 }),
                 _buildDrawerItem('포인트 충전', () {
                   Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => ChargeScreen(
-                      userName: _userId,
-                      currentPoints: _person?.point ?? 0,
-                    ),
-                  )).then((_) => _loadUserData());
+                  // admin 아이디일 때는 다른 사람 포인트 충전 화면으로 이동
+                  if (_userId == 'admin') {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const ChargeAdminScreen(),
+                    )).then((_) => _loadUserData());
+                  } else {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => ChargeScreen(
+                        userName: _userId,
+                        currentPoints: _person?.point ?? 0,
+                      ),
+                    )).then((_) => _loadUserData());
+                  }
                 }),
                 _buildDrawerItem('포인트 정산', () {
                   Navigator.pop(context);
