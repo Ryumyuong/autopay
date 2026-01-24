@@ -115,6 +115,18 @@ class ApiService {
     }
   }
 
+  // FCM 토큰 삭제 (로그아웃 시)
+  Future<void> unregisterUserDevice(String userId, String token) async {
+    try {
+      await _dio.post('/api/device/unregister', data: {
+        'userId': userId,
+        'token': token,
+      });
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // 충전 신청
   Future<Map<String, dynamic>> requestCharge(ChargeReqDTO request) async {
     try {

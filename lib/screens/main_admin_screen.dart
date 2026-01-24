@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 import '../services/token_store.dart';
@@ -97,6 +98,20 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     );
 
     if (confirm == true && mounted) {
+      // 서버에서 FCM 토큰 삭제 (현재 기기 토큰과 일치할 때만)
+      try {
+        final userId = await TokenStore.getUserId();
+        if (userId != null && userId.isNotEmpty) {
+          final currentToken = await FirebaseMessaging.instance.getToken();
+          if (currentToken != null) {
+            await _apiService.unregisterUserDevice(userId, currentToken);
+            debugPrint('FCM 토큰 삭제 완료');
+          }
+        }
+      } catch (e) {
+        debugPrint('FCM 토큰 삭제 실패: $e');
+      }
+
       await TokenStore.clearAll();
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
