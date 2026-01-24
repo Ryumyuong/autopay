@@ -49,4 +49,7 @@ class History {
 
   bool get isPayment => type == 'PAYMENT';
   bool get isCharge => type == 'CHARGE';
+  bool get isGiftSend => type == 'GIFT_SEND';
+  bool get isGiftReceive => type == 'GIFT_RECEIVE';
+  bool get isGift => isGiftSend || isGiftReceive;
 }

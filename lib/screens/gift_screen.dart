@@ -174,7 +174,8 @@ class _GiftScreenState extends State<GiftScreen> {
     }
 
     final receiverName = receiver.name ?? '알 수 없음';
-    final message = '받는 분: $receiverName\n선물 금액: ${Formatters.formatPoint(_currentAmount)}\n\n선물을 보내시겠습니까?';
+    final phoneDisplay = receiver.phone ?? '전화번호 없음';
+    final message = '받는 분: $receiverName\n연락처: $phoneDisplay\n선물 금액: ${Formatters.formatPoint(_currentAmount)}\n\n선물을 보내시겠습니까?';
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -394,7 +395,7 @@ class _GiftScreenState extends State<GiftScreen> {
                   child: ElevatedButton(
                     onPressed: _isSearching ? null : _performSearch,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
+                      backgroundColor: AppColors.primaryDark,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
                       ),
@@ -431,12 +432,33 @@ class _GiftScreenState extends State<GiftScreen> {
                             child: Icon(Icons.person, color: Colors.white),
                           ),
                           title: Text(
-                            user.name ?? '이름 없음',
-                            style: const TextStyle(color: AppColors.textPrimary),
+                            user.id ?? '',
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           subtitle: Text(
-                            user.id ?? '',
+                            user.name ?? '이름 없음',
                             style: const TextStyle(color: AppColors.textHint),
+                          ),
+                          trailing: SizedBox(
+                            width: 70,
+                            height: 40,
+                            child: ElevatedButton(
+                              onPressed: () => _selectUser(user),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryDark,
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
+                                ),
+                              ),
+                              child: const Text(
+                                '선택',
+                                style: TextStyle(color: Colors.white, fontSize: 14),
+                              ),
+                            ),
                           ),
                           onTap: () => _selectUser(user),
                         );

@@ -95,10 +95,28 @@ class _UsageScreenState extends State<UsageScreen> {
   }
 
   Widget _buildHistoryItem(History history) {
-    final isCharge = history.isCharge;
-    final color = isCharge ? AppColors.charge : AppColors.payment;
-    final icon = isCharge ? Icons.add_circle : Icons.remove_circle;
-    final prefix = isCharge ? '+' : '-';
+    // 타입에 따른 색상, 아이콘, 부호 결정
+    final bool isPositive = history.isCharge || history.isGiftReceive;
+    final color = isPositive ? AppColors.charge : AppColors.payment;
+    final icon = isPositive ? Icons.add_circle : Icons.remove_circle;
+    final prefix = isPositive ? '+' : '-';
+
+    // 타입에 따른 표시 이름 결정
+    String displayName;
+    String typeLabel;
+    if (history.isGiftSend) {
+      displayName = '선물 → ${history.chargeName ?? "알 수 없음"}';
+      typeLabel = '선물';
+    } else if (history.isGiftReceive) {
+      displayName = '선물 ← ${history.chargeName ?? "알 수 없음"}';
+      typeLabel = '선물';
+    } else if (history.isCharge) {
+      displayName = history.chargeName ?? '충전';
+      typeLabel = '충전';
+    } else {
+      displayName = history.company ?? history.chargeName ?? '결제';
+      typeLabel = '결제';
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -109,7 +127,7 @@ class _UsageScreenState extends State<UsageScreen> {
         border: Border.all(color: AppColors.cardBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -121,7 +139,7 @@ class _UsageScreenState extends State<UsageScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 24),
@@ -134,7 +152,7 @@ class _UsageScreenState extends State<UsageScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  history.chargeName ?? (isCharge ? '충전' : '결제'),
+                  displayName,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.bold,
@@ -166,9 +184,9 @@ class _UsageScreenState extends State<UsageScreen> {
                 ),
               ),
               Text(
-                isCharge ? '충전' : '결제',
+                typeLabel,
                 style: TextStyle(
-                  color: color.withOpacity(0.7),
+                  color: color.withValues(alpha: 0.7),
                   fontSize: AppDimens.fontSmall,
                 ),
               ),

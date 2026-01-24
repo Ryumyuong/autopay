@@ -3,13 +3,6 @@ import '../models/models.dart';
 import '../services/api_service.dart';
 import '../services/token_store.dart';
 import '../utils/constants.dart';
-import '../utils/formatters.dart';
-import 'login_screen.dart';
-import 'charge_screen.dart';
-import 'usage_screen.dart';
-import 'usage_admin_screen.dart';
-import 'recharge_screen.dart';
-import 'charge_admin_screen.dart';
 
 class QrDisplayScreen extends StatefulWidget {
   const QrDisplayScreen({super.key});
@@ -20,11 +13,9 @@ class QrDisplayScreen extends StatefulWidget {
 
 class _QrDisplayScreenState extends State<QrDisplayScreen> {
   final _apiService = ApiService();
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   Person? _person;
   bool _isLoading = true;
-  String _userName = '';
   String _userId = '';
 
   @override
@@ -38,7 +29,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
 
     try {
       _userId = await TokenStore.getUserId() ?? '';
-      _userName = await TokenStore.getUserName() ?? '';
 
       if (_userId.isNotEmpty) {
         _person = await _apiService.getPerson(_userId);
@@ -52,37 +42,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     }
   }
 
-  Future<void> _logout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardBackground,
-        title: const Text('로그아웃', style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text('로그아웃 하시겠습니까?', style: TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('로그아웃', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await TokenStore.clearAll();
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
-    }
-  }
-
   bool get _isAdmin => _person?.rate == 'ADMIN';
 
   @override
@@ -92,7 +51,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     final textColor = _isAdmin ? Colors.white : AppColors.textPrimary;
 
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: backgroundColor,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary))
@@ -231,131 +189,6 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     );
   }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: AppColors.cardBackground,
-      width: 280,
-      child: Column(
-        children: [
-          // 헤더
-          Container(
-            width: double.infinity,
-            height: 160,
-            padding: const EdgeInsets.only(top: 30, left: 16, right: 16),
-            color: AppColors.primaryDark,
-            child: Row(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person, size: 36, color: AppColors.primaryDark),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${_person?.name ?? _userName} 님',
-                        style: const TextStyle(
-                          color: AppColors.textWhite,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        Formatters.formatPoint(_person?.point ?? 0),
-                        style: const TextStyle(
-                          color: AppColors.pointGold,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 메뉴 아이템들
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _buildDrawerItem('홈페이지 바로가기', Icons.language, () {
-                  Navigator.pop(context);
-                }),
-                _buildDrawerItem('사용 내역 조회', Icons.history, () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => _isAdmin ? const UsageAdminScreen() : const UsageScreen(),
-                    ),
-                  );
-                }),
-                _buildDrawerItem(
-                  _isAdmin ? '포인트 정산' : '포인트 충전',
-                  Icons.account_balance_wallet,
-                  () {
-                    Navigator.pop(context);
-                    if (_userId == 'admin') {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ChargeAdminScreen()));
-                    } else if (_isAdmin) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => RechargeScreen(
-                            userName: _userId,
-                            currentPoints: _person?.point ?? 0,
-                          ),
-                        ),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChargeScreen(
-                            userName: _userId,
-                            currentPoints: _person?.point ?? 0,
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                ),
-                _buildDrawerItem('포인트 가맹점', Icons.store, () {
-                  Navigator.pop(context);
-                }),
-                _buildDrawerItem('고객센터', Icons.support_agent, () {
-                  Navigator.pop(context);
-                }),
-                const Divider(color: AppColors.divider),
-                _buildDrawerItem('로그아웃', Icons.logout, _logout),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(String title, IconData icon, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.textPrimary),
-      title: Text(
-        title,
-        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
-      ),
-      onTap: onTap,
-    );
-  }
 }
 
 // 간단한 QR 코드 페인터 (실제로는 qr_flutter 패키지 사용 권장)
