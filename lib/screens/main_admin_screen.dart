@@ -13,7 +13,9 @@ import 'recharge_screen.dart';
 import 'usage_admin_screen.dart';
 
 class MainAdminScreen extends StatefulWidget {
-  const MainAdminScreen({super.key});
+  final String? initialPayeeId;
+
+  const MainAdminScreen({super.key, this.initialPayeeId});
 
   @override
   State<MainAdminScreen> createState() => _MainAdminScreenState();
@@ -52,6 +54,23 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+
+        // 딥링크로 결제 요청이 있으면 결제 화면으로 이동
+        if (widget.initialPayeeId != null && _person != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PaymentScreen(
+                  userName: _userId,
+                  userDisplayName: _userName,
+                  currentPoints: _person!.point ?? 0,
+                  initialPayeeId: widget.initialPayeeId,
+                ),
+              ),
+            );
+          });
+        }
       }
     }
   }

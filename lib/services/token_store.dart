@@ -2,7 +2,15 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TokenStore {
-  static const _storage = FlutterSecureStorage();
+  // iOS에서 접근성 옵션 설정 (백그라운드에서도 접근 가능)
+  static const _storage = FlutterSecureStorage(
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock,
+    ),
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
   static const _keyUserId = 'user_id';
   static const _keyUserName = 'user_name';
   static const _keyUserRate = 'user_rate';

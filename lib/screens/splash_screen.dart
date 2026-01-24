@@ -47,10 +47,20 @@ class _SplashScreenState extends State<SplashScreen> {
       final pendingPayeeId = DeepLinkService().consumePendingPaymentUserId();
 
       if (isLoggedIn && rate == 'ADMIN') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainAdminScreen()),
-        );
+        // ADMIN도 딥링크 처리
+        if (pendingPayeeId != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MainAdminScreen(initialPayeeId: pendingPayeeId),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MainAdminScreen()),
+          );
+        }
       } else if (isLoggedIn) {
         // 딥링크 결제 요청이 있으면 결제 화면으로 이동
         if (pendingPayeeId != null && userId != null) {
