@@ -31,7 +31,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Person? _payee;
   bool _isPayeeValid = false;
 
-  static const int _step1M = 1000000;
   static const int _maxAmount = 9999999999;
 
   @override
@@ -81,43 +80,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  void _addAmount(int million) {
-    final addedAmount = million * _step1M;
-    final newAmount = _currentAmount + addedAmount;
-    if (newAmount <= _maxAmount && newAmount <= widget.currentPoints) {
-      setState(() => _currentAmount = newAmount);
-    } else if (newAmount > widget.currentPoints) {
-      _showError('포인트가 부족합니다.');
+  void _addNumber(String number) {
+    final currentValue = _currentAmount.toString();
+    final newText = currentValue == '0' ? number : currentValue + number;
+
+    if (newText.length <= 10) {
+      final amount = int.tryParse(newText) ?? 0;
+      if (amount <= _maxAmount) {
+        setState(() => _currentAmount = amount);
+      }
     }
   }
 
   void _deleteLastDigit() {
-    final millionCount = _currentAmount ~/ _step1M;
-    final millionCountStr = millionCount.toString();
-    if (millionCountStr.length > 1) {
-      final newCount = int.parse(millionCountStr.substring(0, millionCountStr.length - 1));
-      setState(() => _currentAmount = newCount * _step1M);
-    } else {
-      setState(() => _currentAmount = 0);
+    final currentValue = _currentAmount.toString();
+    if (currentValue.isNotEmpty && currentValue != '0') {
+      final newText = currentValue.substring(0, currentValue.length - 1);
+      setState(() => _currentAmount = newText.isEmpty ? 0 : int.parse(newText));
     }
   }
 
   void _clearAmount() {
     setState(() => _currentAmount = 0);
-  }
-
-  void _add00() {
-    final millionCount = _currentAmount ~/ _step1M;
-    final nextCountStr = '${millionCount}00';
-    if (nextCountStr.length <= 4) {
-      final nextCount = int.tryParse(nextCountStr) ?? 0;
-      final newAmount = nextCount * _step1M;
-      if (newAmount <= _maxAmount && newAmount <= widget.currentPoints) {
-        setState(() => _currentAmount = newAmount);
-      } else if (newAmount > widget.currentPoints) {
-        _showError('포인트가 부족합니다.');
-      }
-    }
   }
 
   Future<void> _processPayment() async {
@@ -470,29 +454,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
         children: [
           Row(
             children: [
-              _buildKeypadButton('1', () => _addAmount(1)),
-              _buildKeypadButton('2', () => _addAmount(2)),
-              _buildKeypadButton('3', () => _addAmount(3)),
+              _buildKeypadButton('1', () => _addNumber('1')),
+              _buildKeypadButton('2', () => _addNumber('2')),
+              _buildKeypadButton('3', () => _addNumber('3')),
             ],
           ),
           Row(
             children: [
-              _buildKeypadButton('4', () => _addAmount(4)),
-              _buildKeypadButton('5', () => _addAmount(5)),
-              _buildKeypadButton('6', () => _addAmount(6)),
+              _buildKeypadButton('4', () => _addNumber('4')),
+              _buildKeypadButton('5', () => _addNumber('5')),
+              _buildKeypadButton('6', () => _addNumber('6')),
             ],
           ),
           Row(
             children: [
-              _buildKeypadButton('7', () => _addAmount(7)),
-              _buildKeypadButton('8', () => _addAmount(8)),
-              _buildKeypadButton('9', () => _addAmount(9)),
+              _buildKeypadButton('7', () => _addNumber('7')),
+              _buildKeypadButton('8', () => _addNumber('8')),
+              _buildKeypadButton('9', () => _addNumber('9')),
             ],
           ),
           Row(
             children: [
-              _buildKeypadButton('00', _add00),
-              _buildKeypadButton('0', null, enabled: false),
+              _buildKeypadButton('00', () => _addNumber('00')),
+              _buildKeypadButton('0', () => _addNumber('0')),
               _buildKeypadButton('⌫', _deleteLastDigit, onLongPress: _clearAmount),
             ],
           ),
@@ -501,7 +485,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildKeypadButton(String label, VoidCallback? onPressed, {VoidCallback? onLongPress, bool enabled = true}) {
+  Widget _buildKeypadButton(String label, VoidCallback? onPressed, {VoidCallback? onLongPress}) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(4),
@@ -509,7 +493,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
           child: InkWell(
-            onTap: enabled ? onPressed : null,
+            onTap: onPressed,
             onLongPress: onLongPress,
             borderRadius: BorderRadius.circular(AppDimens.radiusMedium),
             child: Container(
@@ -517,8 +501,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
               alignment: Alignment.center,
               child: Text(
                 label,
-                style: TextStyle(
-                  color: enabled ? AppColors.textPrimary : AppColors.textHint,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
