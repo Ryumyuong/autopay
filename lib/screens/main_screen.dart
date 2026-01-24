@@ -366,19 +366,10 @@ class _MainScreenState extends State<MainScreen> {
           ),
         );
       },
-      child: Card(
-        elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.asset(
-            AppAssets.number,
-            height: 120,
-            fit: BoxFit.contain,
-          ),
-        ),
+      child: Image.asset(
+        AppAssets.number,
+        height: 120,
+        fit: BoxFit.contain,
       ),
     );
   }
