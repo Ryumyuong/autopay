@@ -46,33 +46,63 @@ class _QrScanScreenState extends State<QrScanScreen> {
   void _onQrScanned(String data) {
     debugPrint('QR Scanned: $data');
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.primaryDark,
-        title: const Text('QR 코드 스캔', style: TextStyle(color: AppColors.textPrimary)),
-        content: Text(
-          '스캔된 데이터:\n$data',
-          style: const TextStyle(color: AppColors.textSecondary),
+    // QR 데이터에서 user_id 추출
+    final userId = _extractUserId(data);
+
+    if (userId != null && userId.isNotEmpty) {
+      // ID가 추출되면 바로 반환
+      Navigator.pop(context, userId);
+    } else {
+      // ID가 없으면 에러 메시지 표시
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.primaryDark,
+          title: const Text('QR 코드 오류', style: TextStyle(color: AppColors.textPrimary)),
+          content: const Text(
+            'QR 코드에서 사용자 ID를 찾을 수 없습니다.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() => _isScanned = false);
+              },
+              child: const Text('다시 스캔', style: TextStyle(color: AppColors.buttonPrimary)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() => _isScanned = false);
-            },
-            child: const Text('다시 스캔', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context, data);
-            },
-            child: const Text('확인', style: TextStyle(color: AppColors.buttonPrimary)),
-          ),
-        ],
-      ),
-    );
+      );
+    }
+  }
+
+  /// QR 데이터에서 user_id 추출
+  /// 지원 형식:
+  /// - autopay://payment?user_id=xxx
+  /// - http://xxx/pay.html?user_id=xxx
+  /// - id=xxx
+  String? _extractUserId(String qrData) {
+    try {
+      final uri = Uri.parse(qrData);
+      // user_id 파라미터 확인
+      final userId = uri.queryParameters['user_id'] ?? uri.queryParameters['id'];
+      if (userId != null && userId.isNotEmpty) {
+        return userId;
+      }
+    } catch (e) {
+      debugPrint('URI parsing failed: $e');
+    }
+
+    // 단순 key=value 형식 처리: id=xxx 또는 user_id=xxx
+    if (qrData.contains('user_id=')) {
+      return qrData.split('user_id=').last.split('&').first;
+    }
+    if (qrData.contains('id=')) {
+      return qrData.split('id=').last.split('&').first;
+    }
+
+    return null;
   }
 
   void _toggleTorch() async {

@@ -13,6 +13,7 @@ import 'charge_admin_screen.dart';
 import 'payment_screen.dart';
 import 'recharge_screen.dart';
 import 'usage_admin_screen.dart';
+import 'qr_scan_screen.dart';
 
 class MainAdminScreen extends StatefulWidget {
   final String? initialPayeeId;
@@ -295,14 +296,24 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
         // 포인트결제 카드
         Expanded(
           child: GestureDetector(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(
-                builder: (_) => PaymentScreen(
-                  userName: _userId,
-                  userDisplayName: _person?.company ?? _person?.name ?? _userName,
-                  currentPoints: _person?.point ?? 0,
-                ),
-              )).then((_) => _loadUserData());
+            onTap: () async {
+              // QR 스캔 화면으로 먼저 이동
+              final scannedUserId = await Navigator.push<String>(
+                context,
+                MaterialPageRoute(builder: (_) => const QrScanScreen()),
+              );
+
+              // 스캔된 ID가 있으면 결제 화면으로 이동
+              if (scannedUserId != null && scannedUserId.isNotEmpty && mounted) {
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => PaymentScreen(
+                    userName: _userId,
+                    userDisplayName: _person?.company ?? _person?.name ?? _userName,
+                    currentPoints: _person?.point ?? 0,
+                    initialPayeeId: scannedUserId,
+                  ),
+                )).then((_) => _loadUserData());
+              }
             },
             child: Card(
               elevation: 6,

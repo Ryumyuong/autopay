@@ -40,15 +40,24 @@ class DeepLinkService {
   void _handleDeepLink(Uri uri) {
     debugPrint('Deep link received: $uri');
 
+    String? userId;
+
     // autopay://payment?user_id=xxx 형식 처리
     if (uri.scheme == 'autopay' && uri.host == 'payment') {
-      final userId = uri.queryParameters['user_id'];
-      if (userId != null && userId.isNotEmpty) {
-        pendingPaymentUserId = userId;
-        debugPrint('Payment user_id: $userId');
-        // 스트림으로도 전달 (앱이 이미 실행 중일 때)
-        _paymentStreamController.add(userId);
-      }
+      userId = uri.queryParameters['user_id'];
+    }
+    // http://223.130.146.117:8080/pay.html?user_id=xxx 형식 처리
+    else if ((uri.scheme == 'http' || uri.scheme == 'https') &&
+             uri.host == '223.130.146.117' &&
+             uri.path.contains('pay.html')) {
+      userId = uri.queryParameters['user_id'];
+    }
+
+    if (userId != null && userId.isNotEmpty) {
+      pendingPaymentUserId = userId;
+      debugPrint('Payment user_id: $userId');
+      // 스트림으로도 전달 (앱이 이미 실행 중일 때)
+      _paymentStreamController.add(userId);
     }
   }
 
