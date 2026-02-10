@@ -30,18 +30,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _isLoading = false;
   Person? _payee;
   bool _isPayeeValid = false;
+  late int _latestPoints;
 
   static const int _maxAmount = 9999999999;
 
   @override
   void initState() {
     super.initState();
+    _latestPoints = widget.currentPoints;
+    _refreshMyPoints();
     // 딥링크에서 전달된 payeeId가 있으면 자동 검색
     if (widget.initialPayeeId != null && widget.initialPayeeId!.isNotEmpty) {
       _payeeIdController.text = widget.initialPayeeId!;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _searchPayee();
       });
+    }
+  }
+
+  Future<void> _refreshMyPoints() async {
+    try {
+      final me = await _apiService.getPerson(widget.userName);
+      if (mounted) {
+        setState(() {
+          _latestPoints = me.point ?? 0;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to refresh points: $e');
     }
   }
 
@@ -122,7 +138,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    if (_currentAmount > widget.currentPoints) {
+    if (_currentAmount > _latestPoints) {
       _showError('포인트가 부족합니다.');
       return;
     }
@@ -158,8 +174,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. 내 포인트 차감
-      final myNewPoints = widget.currentPoints - _currentAmount;
+      // 1. 최신 포인트 다시 확인 후 차감
+      await _refreshMyPoints();
+      if (_currentAmount > _latestPoints) {
+        _showError('포인트가 부족합니다. 현재 보유: ${Formatters.formatPoint(_latestPoints)}');
+        setState(() => _isLoading = false);
+        return;
+      }
+      final myNewPoints = _latestPoints - _currentAmount;
       final myPerson = Person(
         id: widget.userName,
         name: widget.userDisplayName,
@@ -279,7 +301,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               children: [
                 const Text('보유 포인트', style: TextStyle(color: AppColors.textSecondary)),
                 Text(
-                  Formatters.formatPoint(widget.currentPoints),
+                  Formatters.formatPoint(_latestPoints),
                   style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -422,7 +444,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: (_isLoading || _currentAmount <= 0 || !_isPayeeValid || _currentAmount > widget.currentPoints) ? null : _processPayment,
+                onPressed: (_isLoading || _currentAmount <= 0 || !_isPayeeValid || _currentAmount > _latestPoints) ? null : _processPayment,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.buttonPrimary,
                   foregroundColor: Colors.white,
@@ -434,7 +456,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                     : Text(
-                        _currentAmount > widget.currentPoints
+                        _currentAmount > _latestPoints
                             ? '포인트가 부족합니다'
                             : (_currentAmount > 0 && _isPayeeValid
                                 ? '${Formatters.formatPoint(_currentAmount)} 결제하기'
