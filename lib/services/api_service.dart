@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import '../models/models.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://223.130.146.117:8080'; // 실제 서버
+  static const String baseUrl = 'http://223.130.163.26:8080'; // 실제 서버
 
   final Dio _dio;
 

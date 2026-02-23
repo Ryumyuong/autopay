@@ -368,7 +368,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
         Expanded(
           child: GestureDetector(
             onTap: () {
-              final paymentLink = 'http://223.130.146.117:8080/pay.html?user_id=$_userId';
+              final paymentLink = 'http://223.130.163.26:8080/pay.html?user_id=$_userId';
               Clipboard.setData(ClipboardData(text: paymentLink));
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

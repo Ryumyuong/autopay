@@ -46,9 +46,9 @@ class DeepLinkService {
     if (uri.scheme == 'autopay' && uri.host == 'payment') {
       userId = uri.queryParameters['user_id'];
     }
-    // http://223.130.146.117:8080/pay.html?user_id=xxx 형식 처리
+    // http://223.130.163.26:8080/pay.html?user_id=xxx 형식 처리
     else if ((uri.scheme == 'http' || uri.scheme == 'https') &&
-             uri.host == '223.130.146.117' &&
+             uri.host == '223.130.163.26' &&
              uri.path.contains('pay.html')) {
       userId = uri.queryParameters['user_id'];
     }
