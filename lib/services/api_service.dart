@@ -222,6 +222,16 @@ class ApiService {
     }
   }
 
+  // 최신 앱 버전 조회
+  Future<Map<String, dynamic>> getLatestVersion() async {
+    try {
+      final response = await _dio.get('/api/version');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException e) {
     final response = e.response;
     if (response != null) {

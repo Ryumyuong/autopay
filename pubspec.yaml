@@ -1,7 +1,7 @@
 name: auto
 description: "오토페이 - 포인트 결제 앱"
 publish_to: 'none'
-version: 1.0.5+17
+version: 1.0.6+18
 
 environment:
   sdk: ^3.9.2
@@ -32,6 +32,9 @@ dependencies:
 
   # 이미지
   cached_network_image: ^3.3.1
+
+  # 버전 체크
+  package_info_plus: ^8.0.0
 
   # 유틸리티
   intl: ^0.19.0
