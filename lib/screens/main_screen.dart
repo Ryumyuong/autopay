@@ -11,6 +11,7 @@ import '../utils/constants.dart';
 import '../utils/formatters.dart';
 import 'login_screen.dart';
 import 'charge_screen.dart';
+import 'notifications_screen.dart';
 import 'usage_screen.dart';
 import 'qr_display_screen.dart';
 import 'gift_screen.dart';
@@ -390,18 +391,34 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildBanner() {
-    return Image.asset(
-      AppAssets.addBanner,
-      height: 120,
-      fit: BoxFit.contain,
+    return GestureDetector(
+      onTap: () async {
+        final url = Uri.parse('tel:010-4667-9776');
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url);
+        }
+      },
+      child: Image.asset(
+        AppAssets.addBanner,
+        height: 120,
+        fit: BoxFit.contain,
+      ),
     );
   }
 
   Widget _buildTelImage() {
-    return Image.asset(
-      AppAssets.telImg,
-      height: 120,
-      fit: BoxFit.contain,
+    return GestureDetector(
+      onTap: () async {
+        final url = Uri.parse('tel:010-4667-9776');
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url);
+        }
+      },
+      child: Image.asset(
+        AppAssets.telImg,
+        height: 120,
+        fit: BoxFit.contain,
+      ),
     );
   }
 
@@ -428,6 +445,16 @@ class _MainScreenState extends State<MainScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.person, size: 36, color: AppColors.primaryDark),
+                ),
+                // 알림 아이콘 (Android와 동일)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const NotificationsScreen(),
+                    ));
+                  },
+                  child: const Icon(Icons.notifications, color: AppColors.textWhite, size: 24),
                 ),
                 const SizedBox(width: 16),
                 // 사용자 정보

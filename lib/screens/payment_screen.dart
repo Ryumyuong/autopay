@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
+import '../services/token_store.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
 
@@ -31,6 +32,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Person? _payee;
   bool _isPayeeValid = false;
   late int _latestPoints;
+  String? _myRate;
 
   static const int _maxAmount = 9999999999;
 
@@ -38,6 +40,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     _latestPoints = widget.currentPoints;
+    _loadMyRate();
     _refreshMyPoints();
     // 딥링크에서 전달된 payeeId가 있으면 자동 검색
     if (widget.initialPayeeId != null && widget.initialPayeeId!.isNotEmpty) {
@@ -46,6 +49,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _searchPayee();
       });
     }
+  }
+
+  Future<void> _loadMyRate() async {
+    _myRate = await TokenStore.getUserRate();
   }
 
   Future<void> _refreshMyPoints() async {
@@ -83,6 +90,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       _payee = await _apiService.getPerson(payeeId);
+
+      // 동일 등급 차단 (안드로이드와 동일)
+      final payeeRate = _payee?.rate;
+      if (_myRate == 'USER' && payeeRate == 'USER') {
+        setState(() {
+          _payee = null;
+          _isPayeeValid = false;
+        });
+        _showError('이용자끼리는 사용이 불가능합니다.');
+        return;
+      }
+      if (_myRate == 'ADMIN' && payeeRate == 'ADMIN') {
+        setState(() {
+          _payee = null;
+          _isPayeeValid = false;
+        });
+        _showError('사업자끼리는 사용이 불가능합니다.');
+        return;
+      }
+
       setState(() => _isPayeeValid = true);
       _showSuccess('${_payee?.name ?? payeeId}님을 찾았습니다.');
     } catch (e) {

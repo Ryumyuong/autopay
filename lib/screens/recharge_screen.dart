@@ -134,7 +134,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
         id: widget.userName,
         name: me.name,
         payment: _currentAmount,
-        type: 'PAYMENT',
+        type: 'SETTLEMENT',
         company: me.company,
         chargeName: '오토페이',
       );

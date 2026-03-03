@@ -13,3 +13,4 @@ export 'usage_admin_screen.dart';
 export 'qr_scan_screen.dart';
 export 'qr_display_screen.dart';
 export 'gift_screen.dart';
+export 'notifications_screen.dart';

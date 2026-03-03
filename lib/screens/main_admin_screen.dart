@@ -8,8 +8,8 @@ import '../services/token_store.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
 import 'login_screen.dart';
-import 'charge_screen.dart';
 import 'charge_admin_screen.dart';
+import 'notifications_screen.dart';
 import 'payment_screen.dart';
 import 'recharge_screen.dart';
 import 'usage_admin_screen.dart';
@@ -331,12 +331,12 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        // 포인트충전 카드
+        // 포인트충전 카드 (사업회원은 정산화면으로 이동 - 안드로이드와 동일)
         Expanded(
           child: GestureDetector(
             onTap: () {
               Navigator.push(context, MaterialPageRoute(
-                builder: (_) => ChargeScreen(
+                builder: (_) => RechargeScreen(
                   userName: _userId,
                   currentPoints: _person?.point ?? 0,
                 ),
@@ -426,18 +426,34 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   }
 
   Widget _buildBanner() {
-    return Image.asset(
-      AppAssets.addBanner,
-      height: 120,
-      fit: BoxFit.contain,
+    return GestureDetector(
+      onTap: () async {
+        final url = Uri.parse('tel:010-4667-9776');
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url);
+        }
+      },
+      child: Image.asset(
+        AppAssets.addBanner,
+        height: 120,
+        fit: BoxFit.contain,
+      ),
     );
   }
 
   Widget _buildTelImage() {
-    return Image.asset(
-      AppAssets.telImg,
-      height: 120,
-      fit: BoxFit.contain,
+    return GestureDetector(
+      onTap: () async {
+        final url = Uri.parse('tel:010-4667-9776');
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url);
+        }
+      },
+      child: Image.asset(
+        AppAssets.telImg,
+        height: 120,
+        fit: BoxFit.contain,
+      ),
     );
   }
 
@@ -464,6 +480,16 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.admin_panel_settings, size: 36, color: AppColors.primaryDark),
+                ),
+                // 알림 아이콘 (Android와 동일)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const NotificationsScreen(),
+                    ));
+                  },
+                  child: const Icon(Icons.notifications, color: AppColors.textWhite, size: 24),
                 ),
                 const SizedBox(width: 16),
                 // 사용자 정보
@@ -541,31 +567,25 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const UsageAdminScreen()));
                 }),
-                _buildDrawerItem('포인트 충전', () {
-                  Navigator.pop(context);
-                  // admin 아이디일 때는 다른 사람 포인트 충전 화면으로 이동
-                  if (_userId == 'admin') {
+                // admin 계정: 포인트 충전 (다른 사용자에게 충전)
+                // 사업회원: 포인트 정산 (안드로이드와 동일하게 충전 메뉴 없음)
+                if (_userId == 'admin')
+                  _buildDrawerItem('포인트 충전', () {
+                    Navigator.pop(context);
                     Navigator.push(context, MaterialPageRoute(
                       builder: (_) => const ChargeAdminScreen(),
                     )).then((_) => _loadUserData());
-                  } else {
+                  })
+                else
+                  _buildDrawerItem('포인트 정산', () {
+                    Navigator.pop(context);
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => ChargeScreen(
+                      builder: (_) => RechargeScreen(
                         userName: _userId,
                         currentPoints: _person?.point ?? 0,
                       ),
                     )).then((_) => _loadUserData());
-                  }
-                }),
-                _buildDrawerItem('포인트 정산', () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => RechargeScreen(
-                      userName: _userId,
-                      currentPoints: _person?.point ?? 0,
-                    ),
-                  )).then((_) => _loadUserData());
-                }),
+                  }),
                 _buildDrawerItem('포인트 가맹점', () async {
                   Navigator.pop(context);
                   final url = Uri.parse('https://autoagency.cafe24.com/skin-skin1/board/PARTNERS/4/');

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
+import '../services/firebase_service.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
 import 'main_screen.dart';
@@ -261,6 +262,13 @@ class _GiftScreenState extends State<GiftScreen> {
         ));
       } catch (e) {
         debugPrint('Push notification failed: $e');
+      }
+
+      // Step 6: 로컬 알림 표시 (안드로이드와 동일)
+      try {
+        await FirebaseService().notifyGiftReceived(receiverName, amount);
+      } catch (e) {
+        debugPrint('Gift local notification failed: $e');
       }
 
       if (!mounted) return;

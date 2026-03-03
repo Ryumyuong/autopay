@@ -222,6 +222,26 @@ class ApiService {
     }
   }
 
+  // 충전 완료 알림 (Android와 동일)
+  Future<void> notifyChargeComplete(ChargePushReq request) async {
+    try {
+      await _dio.post('/api/notify/chargeComplete', data: request.toJson());
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 알림 목록 조회 (Android와 동일)
+  Future<List<Map<String, dynamic>>> getNotifications() async {
+    try {
+      final response = await _dio.get('/api/notifications');
+      final list = response.data as List;
+      return list.map((e) => e as Map<String, dynamic>).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // 최신 앱 버전 조회
   Future<Map<String, dynamic>> getLatestVersion() async {
     try {
