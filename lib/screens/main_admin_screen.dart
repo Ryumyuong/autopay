@@ -519,8 +519,8 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
-                              'ADMIN',
-                              style: TextStyle(
+                              'COMPANY',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,

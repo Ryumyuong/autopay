@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   // 기본 색상 (흰색 테마)
   static const Color primary = Color(0xFFFFFFFF);
-  static const Color primaryDark = Color(0xFF1A2332);
+  static const Color primaryDark = Color(0xFFF2F3F5);
   static const Color accent = Color(0xFF074F8A);
   static const Color background = Color(0xFFFFFFFF);
 

@@ -121,7 +121,7 @@ class _UsageAdminScreenState extends State<UsageAdminScreen> {
               children: [
                 const Text(
                   '총 충전',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: AppDimens.fontSmall),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: AppDimens.fontSmall),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -145,11 +145,11 @@ class _UsageAdminScreenState extends State<UsageAdminScreen> {
               children: [
                 const Text(
                   '총 결제/정산',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: AppDimens.fontSmall),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: AppDimens.fontSmall),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '-${Formatters.formatCurrency(_totalPayment)}',
+                  '${Formatters.formatCurrency(_totalPayment)}',
                   style: const TextStyle(
                     color: AppColors.payment,
                     fontWeight: FontWeight.bold,
@@ -232,7 +232,7 @@ class _UsageAdminScreenState extends State<UsageAdminScreen> {
                         child: Text(
                           history.company!,
                           style: const TextStyle(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textPrimary,
                             fontSize: 10,
                           ),
                         ),
@@ -244,7 +244,7 @@ class _UsageAdminScreenState extends State<UsageAdminScreen> {
                 Text(
                   Formatters.formatDateTime(history.time),
                   style: const TextStyle(
-                    color: AppColors.textHint,
+                    color: AppColors.textPrimary,
                     fontSize: AppDimens.fontSmall,
                   ),
                 ),

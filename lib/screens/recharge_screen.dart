@@ -344,7 +344,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: enabled ? AppColors.textPrimary : AppColors.textHint,
+                  color: AppColors.textPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),

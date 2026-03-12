@@ -137,7 +137,7 @@ class _SplashScreenState extends State<SplashScreen> {
       storeUrl = Uri.parse('market://details?id=com.auto.autopay');
     } else if (Platform.isIOS) {
       // iOS App Store ID로 변경 필요
-      storeUrl = Uri.parse('https://apps.apple.com/app/id0000000000');
+      storeUrl = Uri.parse('https://apps.apple.com/app/id6756905219');
     } else {
       return;
     }
