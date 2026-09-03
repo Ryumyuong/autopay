@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
 import 'token_store.dart';
+import 'someday_push_service.dart';
 
 // 백그라운드 메시지 핸들러 (top-level function이어야 함)
 @pragma('vm:entry-point')
@@ -213,6 +214,9 @@ class FirebaseService {
       if (token != null && userId != null && userId.isNotEmpty) {
         await _apiService.registerUserToken(userId, token);
         debugPrint('User token registered successfully');
+
+        // 더썸데이 쇼핑몰에도 같은 토큰 등록 (주문/회원가입 알림용)
+        await SomedayPushService.register(userId, token);
       }
     } catch (e) {
       debugPrint('Error registering user token: $e');
@@ -227,6 +231,12 @@ class FirebaseService {
       if (token != null) {
         await _apiService.registerAdminToken(token, 'admin');
         debugPrint('Admin token registered successfully');
+
+        // 더썸데이 쇼핑몰에도 같은 토큰 등록 (주문/회원가입 알림용)
+        final userId = await TokenStore.getUserId();
+        if (userId != null && userId.isNotEmpty) {
+          await SomedayPushService.register(userId, token);
+        }
       }
     } catch (e) {
       debugPrint('Error registering admin token: $e');

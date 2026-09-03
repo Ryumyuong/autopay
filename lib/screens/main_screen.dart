@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../services/someday_push_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -130,6 +131,9 @@ class _MainScreenState extends State<MainScreen> {
           if (currentToken != null) {
             await _apiService.unregisterUserDevice(userId, currentToken);
             debugPrint('FCM 토큰 삭제 완료');
+
+            // 더썸데이 쇼핑몰에서도 토큰 해제
+            await SomedayPushService.unregister(userId);
           }
         }
       } catch (e) {
