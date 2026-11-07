@@ -592,7 +592,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                   }),
                 _buildDrawerItem('포인트 가맹점', () async {
                   Navigator.pop(context);
-                  final url = Uri.parse('https://autoagency.cafe24.com/skin-skin1/board/PARTNERS/4/');
+                  final url = Uri.parse('https://ilo-club.netlify.app/');
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   }
